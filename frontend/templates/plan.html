@@ -1,0 +1,2481 @@
+{% extends "base.html" %}
+
+{% block title %}Study Planner | Aegis{% endblock %}
+
+{% block content %}
+<style>
+/* ── Plan Page ─────────────────────────────────────────────────── */
+
+.plan-dashboard {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-top: 0;
+}
+
+/* ── Page Header ───────────────────────────────────────────────── */
+.plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.plan-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.plan-subtitle {
+  font-size: 13px;
+  color: #475569;
+  margin: 3px 0 0;
+}
+
+/* ── Setup Warning ─────────────────────────────────────────────── */
+.setup-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+
+.setup-warning i {
+  color: #b45309;
+  margin-top: 1px;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.setup-warning p {
+  margin: 0;
+  color: #1E293B;
+  line-height: 1.5;
+}
+
+.setup-warning a {
+  color: #6254D8;
+  font-weight: 600;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  font-family: inherit;
+  border: none;
+  line-height: 1.4;
+}
+
+.btn-primary {
+  background: #6254D8;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #4a3fb0;
+}
+
+.btn-secondary {
+  background: #f0eefb;
+  color: #6254D8;
+}
+
+.btn-secondary:hover {
+  background: #e4e1f6;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #475569;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-ghost:hover {
+  background: #f9fafb;
+  color: #1E293B;
+}
+
+.btn-on-banner {
+  background: #6254D8;
+  color: #ffffff;
+}
+
+.btn-on-banner:hover {
+  background: #4a3fb0;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Card Base ─────────────────────────────────────────────────── */
+.dashboard-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E293B;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-title i {
+  color: #6254D8;
+  font-size: 14px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ── Next Session Card ─────────────────────────────────────────── */
+.next-session-banner {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid #6254D8;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: none;
+}
+
+.next-session-banner.visible {
+  display: block;
+}
+
+.next-session-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #6254D8;
+  margin-bottom: 6px;
+}
+
+.next-session-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.next-session-details h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  color: #1E293B;
+}
+
+.next-session-time {
+  font-size: 12px;
+  color: #475569;
+}
+
+.session-topic {
+  font-size: 12px;
+  color: #475569;
+  margin-top: 2px;
+}
+
+.next-session-countdown {
+  text-align: right;
+}
+
+.countdown-timer {
+  font-size: 20px;
+  font-weight: 700;
+  color: #6254D8;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.countdown-label {
+  font-size: 11px;
+  color: #475569;
+  margin-top: 2px;
+}
+
+.session-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ── Today's Sessions ──────────────────────────────────────────── */
+.today-section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.today-sessions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+}
+
+.no-sessions {
+  text-align: center;
+  padding: 16px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.session-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
+}
+
+.session-item:hover {
+  border-color: #d9d5f2;
+  background: #faf9ff;
+}
+
+.session-item.today-active {
+  background: #f0eefb;
+  border-color: #d9d5f2;
+}
+
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-status-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.session-status-icon.completed { color: #15803d; }
+.session-status-icon.upcoming { color: #6254D8; }
+.session-status-icon.scheduled { color: #475569; }
+.session-status-icon.starting-soon {
+  color: #b45309;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.session-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-time {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #6254D8;
+  margin-bottom: 2px;
+}
+
+.session-module {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  margin-bottom: 1px;
+}
+
+.session-item .session-topic {
+  color: #334155;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.session-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.session-badge.completed {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.session-badge.starting-soon {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.session-badge.scheduled {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* ── Week Selector ─────────────────────────────────────────────── */
+.week-selector {
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 3px;
+  display: inline-flex;
+  gap: 0;
+}
+
+.week-tab {
+  background: none;
+  border: none;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.week-tab:hover {
+  color: #1E293B;
+}
+
+.week-tab.active {
+  background: #ffffff;
+  color: #6254D8;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Calendar Grid ─────────────────────────────────────────────── */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.cal-day {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cal-day:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cal-day-header {
+  padding: 10px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #64748b;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.cal-day-header.today {
+  color: #6254D8;
+  background: linear-gradient(135deg, #f0eefb 0%, #e8e5f8 100%);
+  border-bottom-color: #d9d5f2;
+  position: relative;
+}
+
+.cal-day-header.today::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: #6254D8;
+  border-radius: 2px;
+}
+
+.cal-sessions-list {
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 60px;
+}
+
+.cal-session {
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: move;
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative;
+  border-left: 3px solid transparent;
+}
+
+.cal-session:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.cal-session.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.cal-session-time {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin-bottom: 3px;
+  opacity: 0.85;
+}
+
+.cal-session-module {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.cal-session-topic {
+  font-size: 10.5px;
+  line-height: 1.4;
+  opacity: 0.8;
+}
+
+.cal-empty {
+  padding: 20px 8px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.cal-sessions-list.drag-over {
+  background: rgba(98, 84, 216, 0.04);
+  border: 1.5px dashed #6254D8;
+  border-radius: 8px;
+}
+
+.cal-drop-zone {
+  border-radius: 8px;
+  min-height: 0;
+  transition: min-height 0.2s, background 0.2s, border-color 0.2s;
+}
+
+body.dragging-session .cal-drop-zone {
+  min-height: 44px;
+  border: 1.5px dashed rgba(98, 84, 216, 0.2);
+  background: rgba(98, 84, 216, 0.02);
+}
+
+.cal-sessions-list.drag-over .cal-drop-zone {
+  min-height: 52px;
+  background: rgba(98, 84, 216, 0.07);
+  border-color: #6254D8;
+}
+
+/* ── Replanned Session Styling ─────────────────────────────────── */
+.cal-session.replanned {
+  border-left: 3px solid #6254D8 !important;
+  position: relative;
+}
+
+.cal-session.replanned::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -3px;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, rgba(98, 84, 216, 0.06) 0%, transparent 60%);
+  border-radius: 0 8px 8px 0;
+  pointer-events: none;
+}
+
+.replanned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #6254D8;
+  background: rgba(98, 84, 216, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.replanned-badge i {
+  font-size: 8px;
+}
+
+/* ── Day Count Badge ───────────────────────────────────────────── */
+.cal-day-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.cal-day-header.today .cal-day-count {
+  background: rgba(98, 84, 216, 0.15);
+  color: #6254D8;
+}
+
+/* ── Today Column Emphasis ─────────────────────────────────────── */
+.cal-day-today {
+  border-color: #d9d5f2;
+  box-shadow: 0 0 0 1px rgba(98, 84, 216, 0.08), 0 2px 8px rgba(98, 84, 216, 0.06);
+}
+
+.cal-day-hours {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.cal-day-header.today .cal-day-hours {
+  color: #6254D8;
+}
+
+/* ── Workload Summary Bar ──────────────────────────────────────── */
+.schedule-workload-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12.5px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workload-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.workload-stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.workload-stat-item strong {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.workload-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.workload-badge.met {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.workload-badge.constrained {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.workload-limitation-alert {
+  width: 100%;
+  font-size: 11.5px;
+  color: #92400e;
+  background: #fef3c7;
+  border-left: 3px solid #d97706;
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ── Manual Generation Section ─────────────────────────────────── */
+.manual-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  transition: background 0.15s;
+}
+
+.collapsible-header:hover {
+  background: #f9fafb;
+}
+
+.collapsible-icon {
+  font-size: 14px;
+  color: #475569;
+  transition: transform 0.2s;
+}
+
+.collapsible-header.open .collapsible-icon {
+  transform: rotate(180deg);
+}
+
+.collapsible-title {
+  flex: 1;
+}
+
+.collapsible-title h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  margin-bottom: 2px;
+}
+
+.collapsible-title p {
+  font-size: 12px;
+  color: #475569;
+  margin: 0;
+}
+
+.collapsible-content {
+  display: none;
+  padding: 12px 0 0 0;
+}
+
+.collapsible-content.open {
+  display: block;
+}
+
+/* ── Form Elements ─────────────────────────────────────────────── */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  color: #475569;
+  margin-bottom: 5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #ffffff;
+  color: #1E293B;
+  transition: border-color 0.15s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #d9d5f2;
+  box-shadow: 0 0 0 3px rgba(98, 84, 216, 0.08);
+}
+
+.form-input::placeholder {
+  color: #94a3b8;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── Status / Error Messages ───────────────────────────────────── */
+.status-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #1d4ed8;
+  margin-top: 10px;
+}
+
+.status-bar.visible {
+  display: flex;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #bfdbfe;
+  border-top-color: #6254D8;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #dc2626;
+  font-size: 12px;
+  display: none;
+  margin-top: 10px;
+}
+
+.error-box.visible {
+  display: block;
+}
+
+/* ── Empty State ───────────────────────────────────────────────── */
+.empty-state-container {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.empty-state-content {
+  max-width: 580px;
+  width: 100%;
+  text-align: center;
+}
+
+.empty-icon-circle {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 18px;
+  background: #f0eefb;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon-circle i {
+  font-size: 24px;
+  color: #6254D8;
+}
+
+.empty-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0 0 8px;
+  letter-spacing: -0.3px;
+}
+
+.empty-subtitle {
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto 24px;
+}
+
+.feature-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.feature-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 12px;
+  transition: border-color 0.15s;
+}
+
+.feature-card:hover {
+  border-color: #d9d5f2;
+}
+
+.feature-icon {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 8px;
+  background: #f0eefb;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6254D8;
+  font-size: 16px;
+}
+
+.feature-card h3 {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1E293B;
+  margin: 0 0 4px;
+}
+
+.feature-card p {
+  font-size: 11.5px;
+  color: #334155;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.cta-section {
+  margin-bottom: 20px;
+}
+
+.btn-generate-hero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  background: #6254D8;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 8px;
+  font-family: inherit;
+}
+
+.btn-generate-hero:hover {
+  background: #4a3fb0;
+}
+
+.cta-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.info-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+}
+
+.info-banner i {
+  font-size: 16px;
+  color: #1d4ed8;
+  flex-shrink: 0;
+}
+
+.info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: left;
+}
+
+.info-text strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.info-text span {
+  font-size: 11px;
+  color: #334155;
+}
+
+/* ── Session Detail Panel ──────────────────────────────────────── */
+.session-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.session-detail-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  position: relative;
+}
+
+.session-detail-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+  font-size: 14px;
+  transition: background 0.15s;
+}
+
+.session-detail-close:hover {
+  background: #e2e8f0;
+}
+
+.session-detail-module {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0 0 4px;
+}
+
+.session-detail-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6254D8;
+  margin-bottom: 4px;
+}
+
+.session-detail-day {
+  font-size: 12px;
+  color: #475569;
+  margin-bottom: 12px;
+}
+
+.session-detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.session-detail-topic {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+.session-detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.session-detail-replanned {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6254D8;
+  background: #f0eefb;
+  padding: 5px 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.session-detail-replanned i {
+  font-size: 10px;
+}
+
+/* ── Cal session truncation ───────────────────────────────────── */
+.cal-session-topic {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cal-session-focus {
+  font-size: 9.5px;
+  font-weight: 600;
+  opacity: 0.6;
+  margin-top: 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Move Session Modal ───────────────────────────────────────── */
+.move-modal-header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #6254D8;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.move-modal-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.move-modal-meta i {
+  color: #6254D8;
+  margin-right: 4px;
+}
+
+.move-validation-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #dc2626;
+  line-height: 1.6;
+}
+
+.move-validation-ok {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #15803d;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .calendar-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .plan-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .next-session-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .next-session-countdown {
+    text-align: left;
+  }
+
+  .calendar-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .today-sessions {
+    grid-template-columns: 1fr;
+  }
+
+  .empty-title {
+    font-size: 18px;
+  }
+
+  .feature-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-generate-hero {
+    width: 100%;
+  }
+
+  .info-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<section class="plan-dashboard">
+
+    <!-- Setup Warning -->
+    {% if not setup_ok %}
+    <div class="setup-warning">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>
+            Your profile isn't fully set up yet. Please complete the
+            <a href="{{ url_for('upload.upload') }}">Upload Wizard</a>
+            so Aegis can generate your personalized study schedule.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Page Header -->
+    <div class="plan-header">
+        <div>
+            <h1 class="plan-title">Study Planner</h1>
+            <p class="plan-subtitle" id="todayDateText"></p>
+        </div>
+        <a href="{{ url_for('upload.upload') }}" class="btn btn-ghost">
+            <i class="fa-solid fa-folder-open"></i> Manage Files
+        </a>
+    </div>
+
+    <!-- Next Session Card -->
+    <div class="next-session-banner" id="nextSessionBanner">
+        <div class="next-session-label">Next Session</div>
+        <div class="next-session-info">
+            <div class="next-session-details">
+                <h3 id="nextSessionModule"></h3>
+                <p class="next-session-time" id="nextSessionTime"></p>
+                <p class="session-topic" id="nextSessionTopic"></p>
+            </div>
+            <div class="next-session-countdown">
+                <div class="countdown-timer" id="countdownTimer">--:--</div>
+                <div class="countdown-label">starts in</div>
+            </div>
+        </div>
+        <div class="session-actions">
+            <button class="btn btn-on-banner" onclick="startStudySession(currentNextSession)">
+                <i class="fa-solid fa-play"></i> Start Session
+            </button>
+        </div>
+    </div>
+
+    <!-- Today's Sessions -->
+    <div class="dashboard-card today-section">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-clock"></i>
+                Today's Sessions
+            </h3>
+        </div>
+        <div class="today-sessions" id="todaySessions"></div>
+    </div>
+
+    <!-- Two-Week Schedule (Calendar) -->
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fa-solid fa-calendar-week"></i>
+                Weekly Schedule
+            </h3>
+            <div class="card-actions">
+                <div class="week-selector">
+                    <button class="week-tab active" id="weekTab1" onclick="switchWeekView(1)">
+                        <span id="weekLabel1">This Week</span>
+                    </button>
+                    <button class="week-tab" id="weekTab2" onclick="switchWeekView(2)">
+                        <span id="weekLabel2">Next Week</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Workload / Intensity Summary -->
+        <div id="scheduleWorkloadSummary" class="schedule-workload-bar" style="display:none;"></div>
+
+        <div class="calendar-container" id="week1Container">
+            <div class="calendar-grid" id="calendarWeek1"></div>
+        </div>
+
+        <div class="calendar-container" id="week2Container" style="display:none;">
+            <div class="calendar-grid" id="calendarWeek2"></div>
+        </div>
+    </div>
+
+    <!-- Manual Generation Section (Collapsed) -->
+    <div class="manual-section">
+        <div class="collapsible-header" onclick="toggleManualGeneration()">
+            <i class="fa-solid fa-chevron-down collapsible-icon" id="manualIcon"></i>
+            <div class="collapsible-title">
+                <h3>Manual Plan Generation</h3>
+                <p>Regenerate your study plan outside the automatic schedule</p>
+            </div>
+        </div>
+
+        <div class="collapsible-content" id="manualContent">
+            <div class="dashboard-card">
+                <div class="form-group">
+                    <label class="form-label">
+                        Plan name (optional)
+                    </label>
+                    <input
+                        class="form-input"
+                        type="text"
+                        id="planTitle"
+                        placeholder="{{ default_plan_title or 'Week 1 Study Plan' }}"
+                        value="{{ default_plan_title or '' }}"
+                        maxlength="80"
+                    >
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="generateBtn" onclick="generatePlan()" {% if not setup_ok %}disabled{% endif %}>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate 2-Week Plan
+                    </button>
+                    <button class="btn btn-ghost" onclick="clearOutput()">
+                        Clear
+                    </button>
+                </div>
+
+                <p style="font-size:12px; color:#475569; margin-top:8px;">
+                    Generates plans for <strong>current week</strong> and <strong>next week</strong>. Takes ~40–80 seconds.
+                </p>
+
+                <div class="status-bar" id="planStatus">
+                    <div class="spinner"></div>
+                    <span id="planStatusTxt">Starting…</span>
+                </div>
+                <div class="error-box" id="planError"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Move Session Modal -->
+    <div id="moveSessionOverlay" class="session-detail-overlay" style="display:none;">
+        <div class="session-detail-panel" style="max-width:380px;">
+            <button class="session-detail-close" onclick="closeMoveModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="move-modal-header">
+                <i class="fa-solid fa-arrows-up-down-left-right"></i> Move Session
+            </div>
+            <div class="session-detail-module" id="moveModalSubject"></div>
+            <div class="session-detail-topic" id="moveModalTopic" style="margin-bottom:8px;"></div>
+            <div class="move-modal-meta">
+                <span><i class="fa-solid fa-calendar-day"></i> <span id="moveModalDay"></span></span>
+                <span><i class="fa-solid fa-clock"></i> <span id="moveModalDuration"></span></span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Start Time</label>
+                <input type="time" class="form-input" id="moveStartTime" oninput="onMoveTimeChange()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">End Time (calculated)</label>
+                <input type="time" class="form-input" id="moveEndTime" readonly
+                       style="background:#f1f5f9; color:#475569;">
+            </div>
+            <div id="moveValidation" style="display:none;"></div>
+            <div class="session-detail-actions">
+                <button class="btn btn-primary" id="moveConfirmBtn" onclick="confirmSessionMove()" disabled>
+                    <i class="fa-solid fa-check"></i> Confirm Move
+                </button>
+                <button class="btn btn-ghost" onclick="closeMoveModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// DASHBOARD JAVASCRIPT
+// ═══════════════════════════════════════════════════════════════════════════
+
+let currentPlanData = {
+    week1: null,
+    week2: null,
+    activeWeek: 1,
+    currentWeekTab: 1,
+    intensity_label: '',
+    target_hrs_min: 0,
+    target_hrs_max: 0
+};
+
+let countdownInterval = null;
+let blockedTimesData = null;
+let pendingMove = null;
+
+// ── Initialize Dashboard ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    initializeDashboard();
+    loadLatestPlans();
+    loadBlockedTimes();
+    updateTodayDate();
+    setInterval(updateCountdown, 1000);
+});
+
+function updateTodayDate() {
+    const now = new Date();
+    const options = { weekday: 'long', month: 'long', day: 'numeric' };
+    const dateText = now.toLocaleDateString('en-US', options);
+    document.getElementById('todayDateText').textContent = dateText;
+}
+
+// ── Load Latest Plans from Server ────────────────────────────────────────
+async function loadLatestPlans() {
+    try {
+        const response = await fetch('/plan/latest');
+        if (!response.ok) {
+            console.warn('No study plans found.');
+            showNoPlansMessage();
+            return;
+        }
+
+        const data = await response.json();
+        currentPlanData.week1 = data.primary;
+        currentPlanData.week2 = data.secondary;
+        currentPlanData.currentWeekTab = data.active_week || 1;
+        currentPlanData.activeWeek = currentPlanData.currentWeekTab;
+        currentPlanData.intensity_label = data.intensity_label || '';
+        currentPlanData.target_hrs_min = data.target_hrs_min || 0;
+        currentPlanData.target_hrs_max = data.target_hrs_max || 0;
+
+        renderDashboard();
+
+        if (currentPlanData.currentWeekTab === 2 && currentPlanData.week2) {
+            switchWeekView(2);
+        }
+    } catch (error) {
+        console.error('Failed to load study plans:', error);
+        showNoPlansMessage();
+    }
+}
+
+function showNoPlansMessage() {
+    const dashboardContainer = document.querySelector('.plan-dashboard');
+    if (dashboardContainer) {
+        dashboardContainer.innerHTML = `
+            <div class="empty-state-container">
+                <div class="empty-state-content">
+                    <div class="empty-icon-circle">
+                        <i class="fa-solid fa-sparkles"></i>
+                    </div>
+                    <h1 class="empty-title">Ready to plan your week?</h1>
+                    <p class="empty-subtitle">
+                        Generate a personalized study plan based on your timetable and learning goals.
+                    </p>
+
+                    <div class="feature-cards">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fa-solid fa-brain"></i>
+                            </div>
+                            <h3>AI-Powered</h3>
+                            <p>Smart scheduling based on your classes and study patterns</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+                            <h3>2-Week Plans</h3>
+                            <p>Coverage for current and next week</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                            <h3>Track Progress</h3>
+                            <p>Monitor study habits and improve over time</p>
+                        </div>
+                    </div>
+
+                    <div class="cta-section">
+                        <button class="btn-generate-hero" onclick="generatePlan()" id="heroGenerateBtn">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            Generate Study Plan
+                        </button>
+                        <p class="cta-hint">Takes 1–2 minutes</p>
+
+                        <div class="status-bar" id="heroStatus" style="margin-top: 14px;">
+                            <div class="spinner"></div>
+                            <span id="heroStatusTxt">Starting…</span>
+                        </div>
+                        <div class="error-box" id="heroError" style="margin-top: 14px;"></div>
+                    </div>
+
+                    <div class="info-banner">
+                        <i class="fa-solid fa-clock"></i>
+                        <div class="info-text">
+                            <strong>Automatic Generation</strong>
+                            <span>New plans are created every Sunday at midnight</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ── Render Dashboard Components ──────────────────────────────────────────
+function renderDashboard() {
+    renderTodaySection();
+    renderWeekView();
+}
+
+async function renderTodaySection() {
+    let todaySessions = [];
+
+    try {
+        const resp = await fetch('/tracker/schedule');
+        if (resp.ok) {
+            const data = await resp.json();
+            todaySessions = Array.isArray(data.sessions) ? [...data.sessions] : [];
+        } else {
+            throw new Error('Failed to fetch today schedule');
+        }
+    } catch (err) {
+        const today = new Date();
+        const dayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+        const plan = currentPlanData.currentWeekTab === 2 && currentPlanData.week2
+            ? currentPlanData.week2
+            : currentPlanData.week1;
+        if (plan && Array.isArray(plan.timetable_json)) {
+            todaySessions = plan.timetable_json.filter(session =>
+                (session.day || '').trim().toLowerCase() === dayName.toLowerCase()
+            );
+        }
+    }
+
+    const container = document.getElementById('todaySessions');
+    const banner = document.getElementById('nextSessionBanner');
+    if (!container) return;
+
+    if (todaySessions.length === 0) {
+        container.innerHTML = '<div class="no-sessions">No sessions scheduled for today</div>';
+        if (banner) banner.classList.remove('visible');
+        return;
+    }
+
+    todaySessions.sort((a, b) => parseTimeString(a.start) - parseTimeString(b.start));
+
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    let nextSession = null;
+    for (let i = 0; i < todaySessions.length; i++) {
+        const sessionStart = parseTimeString(todaySessions[i].start);
+        if (sessionStart > currentTime) {
+            nextSession = todaySessions[i];
+            break;
+        }
+    }
+
+    if (nextSession) {
+        showNextSessionBanner(nextSession);
+    } else if (banner) {
+        banner.classList.remove('visible');
+    }
+
+    container.innerHTML = todaySessions.map(session => {
+        const status = getSessionStatus(session);
+        const icon = getStatusIcon(status);
+        const badge = getStatusBadge(status);
+
+        return `
+            <div class="session-item ${status === 'upcoming' ? 'today-active' : ''}">
+                <div class="session-header">
+                    <div class="session-status-icon ${status}">${icon}</div>
+                    <span class="session-badge ${status}">${badge}</span>
+                </div>
+                <div class="session-content">
+                    <div class="session-time">${session.start} - ${session.end}</div>
+                    <div class="session-module">${session.subject || 'Study Session'}</div>
+                    <div class="session-topic">${session.topic || ''}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+let currentNextSession = null;
+
+function showNextSessionBanner(session) {
+    currentNextSession = session;
+    const banner = document.getElementById('nextSessionBanner');
+    banner.classList.add('visible');
+
+    document.getElementById('nextSessionModule').textContent = session.subject || 'Study Session';
+    document.getElementById('nextSessionTime').textContent = `${session.start} - ${session.end}`;
+    document.getElementById('nextSessionTopic').textContent = session.topic || '';
+
+    updateCountdown();
+}
+
+function updateCountdown() {
+    const banner = document.getElementById('nextSessionBanner');
+    if (!banner.classList.contains('visible')) return;
+
+    const nextSessionTime = document.getElementById('nextSessionTime').textContent.split(' - ')[0];
+    const now = new Date();
+    const sessionTime = parseTimeToDate(nextSessionTime);
+
+    const diff = sessionTime - now;
+
+    if (diff <= 0) {
+        document.getElementById('countdownTimer').textContent = 'Starting Now!';
+        return;
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    if (hours > 0) {
+        document.getElementById('countdownTimer').textContent = `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+        document.getElementById('countdownTimer').textContent = `${minutes}m ${seconds}s`;
+    } else {
+        document.getElementById('countdownTimer').textContent = `${seconds}s`;
+    }
+}
+
+function parseTimeToDate(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+}
+
+function getSessionStatus(session) {
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const sessionStart = parseTimeString(session.start);
+    const sessionEnd = parseTimeString(session.end);
+
+    if (currentTime >= sessionEnd) {
+        return 'completed';
+    } else if (currentTime >= sessionStart && currentTime < sessionEnd) {
+        return 'upcoming';
+    } else if (sessionStart - currentTime <= 30) {
+        return 'starting-soon';
+    } else {
+        return 'scheduled';
+    }
+}
+
+function getStatusIcon(status) {
+    const icons = {
+        'completed': '✓',
+        'upcoming': '▶',
+        'starting-soon': '⏰',
+        'scheduled': '○'
+    };
+    return icons[status] || '○';
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'completed': 'Completed',
+        'upcoming': 'In Progress',
+        'starting-soon': 'Starting Soon',
+        'scheduled': 'Scheduled'
+    };
+    return badges[status] || 'Scheduled';
+}
+
+function parseTimeString(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
+// ── Render Week View ─────────────────────────────────────────────────────
+function renderWeekView() {
+    renderWeek(1, 'calendarWeek1', currentPlanData.week1);
+    renderWeek(2, 'calendarWeek2', currentPlanData.week2);
+
+    if (currentPlanData.week1) {
+        const weekNum1 = extractWeekNumber(currentPlanData.week1.title);
+        document.getElementById('weekLabel1').textContent = `Week ${weekNum1}`;
+    }
+
+    if (currentPlanData.week2) {
+        const weekNum2 = extractWeekNumber(currentPlanData.week2.title);
+        document.getElementById('weekLabel2').textContent = `Week ${weekNum2}`;
+    }
+
+    updateWorkloadSummary(currentPlanData.activeWeek || 1);
+}
+
+function updateWorkloadSummary(weekNum) {
+    const summaryEl = document.getElementById('scheduleWorkloadSummary');
+    if (!summaryEl) return;
+
+    const plan = weekNum === 2 && currentPlanData.week2 ? currentPlanData.week2 : currentPlanData.week1;
+    if (!plan || !Array.isArray(plan.timetable_json) || plan.timetable_json.length === 0) {
+        summaryEl.style.display = 'none';
+        return;
+    }
+
+    let totalMins = 0;
+    plan.timetable_json.forEach(s => {
+        const startM = parseTimeString(s.start);
+        const endM = parseTimeString(s.end);
+        if (!isNaN(startM) && !isNaN(endM) && endM > startM) {
+            totalMins += (endM - startM);
+        }
+    });
+
+    const hours = (totalMins / 60).toFixed(1);
+    const sessionCount = plan.timetable_json.length;
+
+    const targetMin = currentPlanData.target_hrs_min || 16;
+    const targetMax = currentPlanData.target_hrs_max || 25;
+    const intensityLabel = currentPlanData.intensity_label || 'Study Plan';
+
+    const isUnderScheduled = (totalMins / 60) < (targetMin - 0.1);
+    const badgeClass = isUnderScheduled ? 'constrained' : 'met';
+    const badgeText = isUnderScheduled ? 'Schedule Constrained' : 'Target Met';
+
+    let limitationHtml = '';
+    if (isUnderScheduled) {
+        limitationHtml = `
+            <div class="workload-limitation-alert">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>Schedule constrained:</strong> Target was ${targetMin}–${targetMax} hrs/week (${intensityLabel}), but ${hours} hrs (${sessionCount} sessions) were scheduled due to timetable constraints (class hours, commitments, rest breaks, and allowed study days). All available realistic study slots have been scheduled.
+            </div>
+        `;
+    }
+
+    summaryEl.innerHTML = `
+        <div class="workload-stats">
+            <div class="workload-stat-item">
+                <i class="fa-solid fa-clock" style="color:#6254D8;"></i>
+                <span>Scheduled: <strong>${hours} hrs</strong> (${sessionCount} sessions)</span>
+            </div>
+            <div class="workload-stat-item">
+                <i class="fa-solid fa-bullseye" style="color:#0ea5e9;"></i>
+                <span>Target: <strong>${targetMin}–${targetMax} hrs/week</strong> (${intensityLabel})</span>
+            </div>
+            <span class="workload-badge ${badgeClass}">${badgeText}</span>
+        </div>
+        ${limitationHtml}
+    `;
+    summaryEl.style.display = 'block';
+}
+
+function renderWeek(weekNum, containerId, planData) {
+    const container = document.getElementById(containerId);
+    if (!planData || !planData.timetable_json) {
+        container.innerHTML = '<div class="no-sessions">No plan available for this week</div>';
+        return;
+    }
+
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+    const sessionsByDay = {};
+    daysOfWeek.forEach(day => { sessionsByDay[day] = []; });
+
+    planData.timetable_json.forEach(session => {
+        const day = session.day;
+        if (sessionsByDay[day]) {
+            sessionsByDay[day].push(session);
+        }
+    });
+
+    container.innerHTML = daysOfWeek.map(day => {
+        const isToday = day === today && weekNum === (currentPlanData.currentWeekTab || 1);
+        const sessions = sessionsByDay[day] || [];
+
+        sessions.sort((a, b) => parseTimeString(a.start) - parseTimeString(b.start));
+
+        let dayMinutes = 0;
+        sessions.forEach(s => {
+            const startM = parseTimeString(s.start);
+            const endM = parseTimeString(s.end);
+            if (!isNaN(startM) && !isNaN(endM) && endM > startM) {
+                dayMinutes += (endM - startM);
+            }
+        });
+        const dayHoursText = dayMinutes >= 60
+            ? `${(dayMinutes / 60).toFixed(1)}h`
+            : `${dayMinutes}m`;
+
+        const countBadge = sessions.length > 0
+            ? `<span class="cal-day-count">${sessions.length}</span>`
+            : '';
+        const dayHoursBadge = sessions.length > 0
+            ? `<div class="cal-day-hours">${dayHoursText}</div>`
+            : '';
+
+        return `
+            <div class="cal-day ${isToday ? 'cal-day-today' : ''}">
+                <div class="cal-day-header ${isToday ? 'today' : ''}">
+                    <div>${day.slice(0, 3).toUpperCase()} ${countBadge}</div>
+                    ${dayHoursBadge}
+                </div>
+                <div class="cal-sessions-list" data-day="${day}" data-week="${weekNum}"
+                     ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    ${sessions.length > 0
+                        ? sessions.map(session => renderCalSession(session)).join('') + '<div class="cal-drop-zone"></div>'
+                        : '<div class="cal-empty">—</div>'
+                    }
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderCalSession(session) {
+    const colors = getModuleColor(session.subject);
+    const isReplanned = session.replanned === true;
+    const escaped = JSON.stringify(session).replace(/'/g, '&#39;');
+    const replannedBadge = isReplanned
+        ? `<div class="replanned-badge"><i class="fa-solid fa-rotate-right"></i> Replanned${session.replanned_from ? ' from ' + session.replanned_from : ''}</div>`
+        : '';
+    return `
+        <div class="cal-session ${isReplanned ? 'replanned' : ''}" draggable="true"
+             ondragstart="handleDragStart(event)"
+             ondragend="handleDragEnd(event)"
+             onclick="showSessionDetail(event)"
+             style="background:${colors.bg}; border-color:${colors.border}; border-right:1px solid ${colors.border}; border-top:1px solid ${colors.border}; border-bottom:1px solid ${colors.border}; color:${colors.text}; ${isReplanned ? 'border-left:3px solid #6254D8;' : 'border-left:3px solid ' + colors.accent + ';'}"
+             data-session='${escaped}'>
+            <div class="cal-session-time">${session.start} – ${session.end}</div>
+            <div class="cal-session-module">${session.subject || 'Study'}</div>
+            <div class="cal-session-topic">${session.topic || ''}</div>
+            ${replannedBadge}
+        </div>
+    `;
+}
+
+function getModuleColor(module) {
+    const palette = [
+        { key: 'Cyber attack',      bg: '#fef2f2', border: '#fecaca', text: '#991b1b', accent: '#ef4444' },
+        { key: 'Cyber threat',      bg: '#fff7ed', border: '#fed7aa', text: '#9a3412', accent: '#f97316' },
+        { key: 'Malware',           bg: '#eff6ff', border: '#bfdbfe', text: '#1e3a5f', accent: '#3b82f6' },
+        { key: 'Responsible AI',    bg: '#f0fdf4', border: '#bbf7d0', text: '#14532d', accent: '#22c55e' },
+        { key: 'Applied AI',        bg: '#faf5ff', border: '#e9d5ff', text: '#581c87', accent: '#a855f7' },
+        { key: 'Cybersecurity',     bg: '#faf5ff', border: '#e9d5ff', text: '#581c87', accent: '#a855f7' },
+        { key: 'EG2A11',            bg: '#fef2f2', border: '#fecaca', text: '#991b1b', accent: '#ef4444' },
+        { key: 'EG2A12',            bg: '#eff6ff', border: '#bfdbfe', text: '#1e3a5f', accent: '#3b82f6' },
+        { key: 'EG2A13',            bg: '#fffbeb', border: '#fde68a', text: '#78350f', accent: '#f59e0b' },
+        { key: 'EG2A14',            bg: '#f0fdf4', border: '#bbf7d0', text: '#14532d', accent: '#22c55e' },
+        { key: 'EG2A16',            bg: '#f0eefb', border: '#d9d5f2', text: '#3b2f9e', accent: '#6254D8' },
+        { key: 'EG2A17',            bg: '#fef2f2', border: '#fecaca', text: '#991b1b', accent: '#ef4444' },
+    ];
+
+    if (module) {
+        const lower = module.toLowerCase();
+        for (const c of palette) {
+            if (lower.includes(c.key.toLowerCase())) {
+                return c;
+            }
+        }
+    }
+
+    return { bg: '#f1f5f9', border: '#e2e8f0', text: '#334155', accent: '#94a3b8' };
+}
+
+function showSessionDetail(event) {
+    if (event.target.closest('.cal-session')?.classList.contains('dragging')) return;
+    const el = event.currentTarget;
+    const session = JSON.parse(el.dataset.session);
+    const existing = document.querySelector('.session-detail-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'session-detail-overlay';
+    const replannedInfo = session.replanned
+        ? `<div class="session-detail-replanned"><i class="fa-solid fa-rotate-right"></i> Replanned${session.replanned_from ? ' from ' + session.replanned_from : ''}</div>`
+        : '';
+    overlay.innerHTML = `
+        <div class="session-detail-panel">
+            <button class="session-detail-close" onclick="this.closest('.session-detail-overlay').remove()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            ${replannedInfo}
+            <div class="session-detail-module">${session.subject || 'Study Session'}</div>
+            <div class="session-detail-time">${session.start} – ${session.end}</div>
+            <div class="session-detail-day">${session.day}</div>
+            ${session.topic ? `
+                <div class="session-detail-label">Topic</div>
+                <div class="session-detail-topic">${session.topic}</div>
+            ` : ''}
+            ${session.focus ? `
+                <div class="session-detail-label">Focus</div>
+                <div class="session-detail-topic">${session.focus}</div>
+            ` : ''}
+            <div class="session-detail-actions">
+                <button class="btn btn-primary" id="modalStartBtn">
+                    <i class="fa-solid fa-play"></i> Start Session
+                </button>
+                <button class="btn btn-ghost" onclick="this.closest('.session-detail-overlay').remove()">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
+    document.getElementById('modalStartBtn').addEventListener('click', () => {
+        startStudySession(session);
+    });
+}
+
+function extractWeekNumber(title) {
+    const match = title.match(/Week\s*(\d+)/i);
+    return match ? match[1] : '?';
+}
+
+// ── Drag and Drop Functionality ───────────────────────────────────────────
+let draggedSession = null;
+let draggedSessionOriginalDay = null;
+let draggedSessionOriginalWeek = null;
+let dropTargetSession = null;
+
+function handleDragStart(event) {
+    const sessionElement = event.target.closest('.cal-session');
+    if (!sessionElement) return;
+
+    draggedSession = JSON.parse(sessionElement.dataset.session);
+    draggedSessionOriginalDay = draggedSession.day;
+
+    const container = sessionElement.closest('.calendar-container');
+    draggedSessionOriginalWeek = container.id === 'week1Container' ? 1 : 2;
+
+    sessionElement.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/html', sessionElement.innerHTML);
+    document.body.classList.add('dragging-session');
+}
+
+function handleDragEnd(event) {
+    document.body.classList.remove('dragging-session');
+    const sessionElement = event.target.closest('.cal-session');
+    if (sessionElement) {
+        sessionElement.classList.remove('dragging');
+    }
+    document.querySelectorAll('.cal-sessions-list').forEach(el => {
+        el.classList.remove('drag-over');
+    });
+    document.querySelectorAll('.cal-session').forEach(el => {
+        el.classList.remove('drop-target');
+    });
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+
+    const sessionElement = event.target.closest('.cal-session');
+    if (sessionElement && sessionElement.dataset.session) {
+        dropTargetSession = JSON.parse(sessionElement.dataset.session);
+        sessionElement.classList.add('drop-target');
+        event.currentTarget.classList.remove('drag-over');
+    } else {
+        dropTargetSession = null;
+        event.currentTarget.classList.add('drag-over');
+        document.querySelectorAll('.cal-session').forEach(el => {
+            el.classList.remove('drop-target');
+        });
+    }
+}
+
+function handleDragLeave(event) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+        event.currentTarget.classList.remove('drag-over');
+    }
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    event.currentTarget.classList.remove('drag-over');
+    document.querySelectorAll('.cal-session').forEach(el => {
+        el.classList.remove('drop-target');
+    });
+
+    if (!draggedSession) return;
+
+    const targetDay = event.currentTarget.dataset.day;
+    const targetWeek = parseInt(event.currentTarget.dataset.week);
+
+    const sourcePlan = draggedSessionOriginalWeek === 1 ? currentPlanData.week1 : currentPlanData.week2;
+    const targetPlan = targetWeek === 1 ? currentPlanData.week1 : currentPlanData.week2;
+
+    if (!sourcePlan || !targetPlan || !sourcePlan.timetable_json || !targetPlan.timetable_json) {
+        console.error('Plan data not available');
+        alert('Failed to move session: Plan data not available');
+        resetDragState();
+        return;
+    }
+
+    if (dropTargetSession &&
+        dropTargetSession.day === draggedSession.day &&
+        dropTargetSession.start === draggedSession.start &&
+        dropTargetSession.subject === draggedSession.subject) {
+        resetDragState();
+        return;
+    }
+
+    const sourceSessionIndex = sourcePlan.timetable_json.findIndex(s =>
+        s.day === draggedSessionOriginalDay &&
+        s.start === draggedSession.start &&
+        s.subject === draggedSession.subject &&
+        s.end === draggedSession.end
+    );
+
+    if (sourceSessionIndex === -1) {
+        console.error('Could not find dragged session in source plan');
+        alert('Failed to move session: Session not found');
+        resetDragState();
+        return;
+    }
+
+    let needsSave = false;
+
+    if (dropTargetSession) {
+        const targetSessionIndex = targetPlan.timetable_json.findIndex(s =>
+            s.day === dropTargetSession.day &&
+            s.start === dropTargetSession.start &&
+            s.subject === dropTargetSession.subject &&
+            s.end === dropTargetSession.end
+        );
+
+        if (targetSessionIndex !== -1) {
+            if (draggedSessionOriginalWeek === targetWeek) {
+                const tempDay = targetPlan.timetable_json[sourceSessionIndex].day;
+                const tempStart = targetPlan.timetable_json[sourceSessionIndex].start;
+                const tempEnd = targetPlan.timetable_json[sourceSessionIndex].end;
+
+                targetPlan.timetable_json[sourceSessionIndex].day = targetPlan.timetable_json[targetSessionIndex].day;
+                targetPlan.timetable_json[sourceSessionIndex].start = targetPlan.timetable_json[targetSessionIndex].start;
+                targetPlan.timetable_json[sourceSessionIndex].end = targetPlan.timetable_json[targetSessionIndex].end;
+
+                targetPlan.timetable_json[targetSessionIndex].day = tempDay;
+                targetPlan.timetable_json[targetSessionIndex].start = tempStart;
+                targetPlan.timetable_json[targetSessionIndex].end = tempEnd;
+
+                needsSave = true;
+            } else {
+                const draggedSessionCopy = { ...sourcePlan.timetable_json[sourceSessionIndex] };
+                const targetSessionCopy = { ...targetPlan.timetable_json[targetSessionIndex] };
+
+                sourcePlan.timetable_json.splice(sourceSessionIndex, 1);
+                targetPlan.timetable_json.splice(targetSessionIndex, 1);
+
+                sourcePlan.timetable_json.push({
+                    ...targetSessionCopy,
+                    day: draggedSessionCopy.day,
+                    start: draggedSessionCopy.start,
+                    end: draggedSessionCopy.end
+                });
+
+                targetPlan.timetable_json.push({
+                    ...draggedSessionCopy,
+                    day: targetSessionCopy.day,
+                    start: targetSessionCopy.start,
+                    end: targetSessionCopy.end
+                });
+
+                needsSave = true;
+            }
+        }
+    } else {
+        showMoveModal({
+            session: { ...draggedSession },
+            originalDay: draggedSessionOriginalDay,
+            originalWeek: draggedSessionOriginalWeek,
+            targetDay: targetDay,
+            targetWeek: targetWeek
+        });
+        resetDragState();
+        return;
+    }
+
+    if (needsSave) {
+        renderWeekView();
+
+        if (draggedSessionOriginalWeek !== targetWeek) {
+            Promise.all([
+                saveScheduleChanges(sourcePlan, draggedSessionOriginalWeek),
+                saveScheduleChanges(targetPlan, targetWeek)
+            ]).then(() => renderTodaySection());
+        } else {
+            saveScheduleChanges(sourcePlan, draggedSessionOriginalWeek)
+                .then(() => renderTodaySection());
+        }
+    }
+
+    resetDragState();
+}
+
+function resetDragState() {
+    draggedSession = null;
+    draggedSessionOriginalDay = null;
+    draggedSessionOriginalWeek = null;
+    dropTargetSession = null;
+}
+
+// ── Move Session Modal ────────────────────────────────────────────────────
+
+async function loadBlockedTimes() {
+    try {
+        const resp = await fetch('/plan/blocked-times');
+        if (resp.ok) {
+            blockedTimesData = await resp.json();
+        }
+    } catch (err) {
+        console.warn('Could not load blocked times:', err);
+    }
+}
+
+function showMoveModal(moveInfo) {
+    pendingMove = moveInfo;
+    const session = moveInfo.session;
+    const startMins = parseTimeString(session.start);
+    const endMins = parseTimeString(session.end);
+    pendingMove.duration = endMins - startMins;
+
+    document.getElementById('moveModalSubject').textContent = session.subject || 'Study Session';
+    document.getElementById('moveModalTopic').textContent = session.topic || '';
+    document.getElementById('moveModalDay').textContent = moveInfo.targetDay;
+    document.getElementById('moveModalDuration').textContent = `${pendingMove.duration} min`;
+    document.getElementById('moveStartTime').value = session.start;
+    updateMoveEndTime();
+    validateMoveTime();
+
+    const overlay = document.getElementById('moveSessionOverlay');
+    overlay.style.display = 'flex';
+    overlay.onclick = function(e) {
+        if (e.target === overlay) closeMoveModal();
+    };
+}
+
+function closeMoveModal() {
+    document.getElementById('moveSessionOverlay').style.display = 'none';
+    pendingMove = null;
+}
+
+function onMoveTimeChange() {
+    updateMoveEndTime();
+    validateMoveTime();
+}
+
+function updateMoveEndTime() {
+    const startTime = document.getElementById('moveStartTime').value;
+    if (!startTime || !pendingMove) {
+        document.getElementById('moveEndTime').value = '';
+        return;
+    }
+    const startMins = parseTimeString(startTime);
+    const endMins = startMins + pendingMove.duration;
+    const endHH = String(Math.floor(endMins / 60)).padStart(2, '0');
+    const endMM = String(endMins % 60).padStart(2, '0');
+    document.getElementById('moveEndTime').value = `${endHH}:${endMM}`;
+}
+
+function validateMoveTime() {
+    const msgEl = document.getElementById('moveValidation');
+    const confirmBtn = document.getElementById('moveConfirmBtn');
+
+    if (!pendingMove) return;
+
+    const startTime = document.getElementById('moveStartTime').value;
+    if (!startTime) {
+        msgEl.style.display = 'none';
+        confirmBtn.disabled = true;
+        return;
+    }
+
+    const startMins = parseTimeString(startTime);
+    const endMins = startMins + pendingMove.duration;
+    const targetDay = pendingMove.targetDay;
+    const conflicts = [];
+
+    if (startMins < 6 * 60) conflicts.push('Session starts before 06:00');
+    if (endMins > 23 * 60) conflicts.push('Session ends after 23:00');
+
+    if (blockedTimesData && blockedTimesData.blocked_by_day && blockedTimesData.blocked_by_day[targetDay]) {
+        for (const block of blockedTimesData.blocked_by_day[targetDay]) {
+            const blockStart = parseTimeString(block.start);
+            const blockEnd = parseTimeString(block.end);
+            if (startMins < blockEnd && endMins > blockStart) {
+                conflicts.push(`Conflicts with ${block.label} (${block.start}–${block.end})`);
+            }
+        }
+    }
+
+    const targetPlan = pendingMove.targetWeek === 1 ? currentPlanData.week1 : currentPlanData.week2;
+    const breakMins = (blockedTimesData && blockedTimesData.break_mins) || 15;
+
+    if (targetPlan && targetPlan.timetable_json) {
+        for (const s of targetPlan.timetable_json) {
+            if (s.day !== targetDay) continue;
+            if (s.day === pendingMove.session.day &&
+                s.start === pendingMove.session.start &&
+                s.end === pendingMove.session.end &&
+                s.subject === pendingMove.session.subject) continue;
+
+            const sessStart = parseTimeString(s.start);
+            const sessEnd = parseTimeString(s.end);
+
+            if (startMins < sessEnd && endMins > sessStart) {
+                conflicts.push(`Overlaps with ${s.subject} (${s.start}–${s.end})`);
+            } else if (startMins < (sessEnd + breakMins) && endMins > (sessStart - breakMins)) {
+                conflicts.push(`Needs ${breakMins}min break from ${s.subject} (${s.start}–${s.end})`);
+            }
+        }
+    }
+
+    if (conflicts.length > 0) {
+        msgEl.innerHTML = conflicts.map(c => `<div>⚠ ${c}</div>`).join('');
+        msgEl.style.display = 'block';
+        msgEl.className = 'move-validation-error';
+        confirmBtn.disabled = true;
+    } else {
+        msgEl.innerHTML = '<div>✓ No conflicts found</div>';
+        msgEl.style.display = 'block';
+        msgEl.className = 'move-validation-ok';
+        confirmBtn.disabled = false;
+    }
+}
+
+function confirmSessionMove() {
+    if (!pendingMove) return;
+
+    const startTime = document.getElementById('moveStartTime').value;
+    const endTime = document.getElementById('moveEndTime').value;
+    if (!startTime || !endTime) return;
+
+    const { session, originalDay, originalWeek, targetDay, targetWeek } = pendingMove;
+
+    const sourcePlan = originalWeek === 1 ? currentPlanData.week1 : currentPlanData.week2;
+    const targetPlan = targetWeek === 1 ? currentPlanData.week1 : currentPlanData.week2;
+
+    if (!sourcePlan || !targetPlan) {
+        alert('Plan data not available');
+        closeMoveModal();
+        return;
+    }
+
+    const sourceSessionIndex = sourcePlan.timetable_json.findIndex(s =>
+        s.day === originalDay &&
+        s.start === session.start &&
+        s.subject === session.subject &&
+        s.end === session.end
+    );
+
+    if (sourceSessionIndex === -1) {
+        alert('Session not found in plan data');
+        closeMoveModal();
+        return;
+    }
+
+    if (originalWeek === targetWeek) {
+        sourcePlan.timetable_json[sourceSessionIndex].day = targetDay;
+        sourcePlan.timetable_json[sourceSessionIndex].start = startTime;
+        sourcePlan.timetable_json[sourceSessionIndex].end = endTime;
+    } else {
+        const sessionToMove = sourcePlan.timetable_json.splice(sourceSessionIndex, 1)[0];
+        sessionToMove.day = targetDay;
+        sessionToMove.start = startTime;
+        sessionToMove.end = endTime;
+        targetPlan.timetable_json.push(sessionToMove);
+    }
+
+    closeMoveModal();
+    renderWeekView();
+
+    if (originalWeek !== targetWeek) {
+        Promise.all([
+            saveScheduleChanges(sourcePlan, originalWeek),
+            saveScheduleChanges(targetPlan, targetWeek)
+        ]).then(() => renderTodaySection());
+    } else {
+        saveScheduleChanges(sourcePlan, originalWeek)
+            .then(() => renderTodaySection());
+    }
+}
+
+async function saveScheduleChanges(planData, weekNum) {
+    if (!planData.plan_id) {
+        alert('Failed to save changes: Plan ID is missing');
+        return false;
+    }
+
+    try {
+        const payload = {
+            plan_id: planData.plan_id,
+            timetable_json: planData.timetable_json,
+            week: weekNum
+        };
+
+        const response = await fetch('/plan/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            alert(`Failed to save changes: ${error.error || 'Unknown error'}`);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        alert(`Failed to save changes: ${error.message}`);
+        return false;
+    }
+}
+
+// ── Week View Switching ───────────────────────────────────────────────────
+function switchWeekView(weekNum) {
+    currentPlanData.activeWeek = weekNum;
+
+    document.getElementById('weekTab1').classList.toggle('active', weekNum === 1);
+    document.getElementById('weekTab2').classList.toggle('active', weekNum === 2);
+
+    document.getElementById('week1Container').style.display = weekNum === 1 ? 'block' : 'none';
+    document.getElementById('week2Container').style.display = weekNum === 2 ? 'block' : 'none';
+
+    updateWorkloadSummary(weekNum);
+}
+
+// ── Manual Generation Toggle ──────────────────────────────────────────────
+function toggleManualGeneration() {
+    const header = document.querySelector('.collapsible-header');
+    const content = document.getElementById('manualContent');
+
+    header.classList.toggle('open');
+    content.classList.toggle('open');
+}
+
+// ── Action Handlers ───────────────────────────────────────────────────────
+async function startStudySession(session) {
+    if (!session || !session.subject) {
+        window.location.href = '/tracker';
+        return;
+    }
+
+    const startHH = session.start || '';
+    const endHH = session.end || '';
+    let durationMins = 60;
+    if (startHH && endHH) {
+        const [sh, sm] = startHH.split(':').map(Number);
+        const [eh, em] = endHH.split(':').map(Number);
+        durationMins = Math.max(1, (eh * 60 + em) - (sh * 60 + sm));
+    }
+
+    try {
+        const resp = await fetch('/tracker/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                module_name: session.subject,
+                planned_duration_mins: durationMins,
+                slot_start: startHH,
+                slot_end: endHH
+            })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+            window.location.href = '/tracker';
+        } else {
+            alert(data.error || 'Failed to start session.');
+        }
+    } catch (err) {
+        console.error('Start session failed:', err);
+        window.location.href = '/tracker';
+    }
+}
+
+
+function toggleCalendarView() {
+    alert('Full calendar view coming soon!');
+}
+
+function initializeDashboard() {
+    console.log('Dashboard initialized');
+}
+
+// ── Manual Generation ────────────────────────────────────────────────────
+async function generatePlan() {
+    const btn = document.getElementById('generateBtn');
+    const heroBtn = document.getElementById('heroGenerateBtn');
+
+    const errBox = document.getElementById('planError') || document.getElementById('heroError');
+    const statusBar = document.getElementById('planStatus') || document.getElementById('heroStatus');
+    const statusTxt = document.getElementById('planStatusTxt') || document.getElementById('heroStatusTxt');
+
+    if (errBox) {
+        errBox.className = 'error-box';
+        errBox.textContent = '';
+    }
+    if (statusBar) {
+        statusBar.className = 'status-bar visible';
+    }
+    if (statusTxt) {
+        statusTxt.textContent = 'Starting plan generation...';
+    }
+
+    if (btn) btn.disabled = true;
+    if (heroBtn) heroBtn.disabled = true;
+
+    const planTitleInput = document.getElementById('planTitle');
+    const planTitle = planTitleInput ? planTitleInput.value.trim() : '';
+
+    try {
+        const response = await fetch('/plan/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan_title: planTitle })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Plan generation failed: ${response.status} - ${errorText}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = JSON.parse(line.slice(6));
+
+                    if (data.status) {
+                        statusTxt.textContent = data.status;
+                    }
+
+                    if (data.week1_done) {
+                        statusTxt.textContent = 'Week 1 complete! Generating Week 2...';
+                    }
+
+                    if (data.done) {
+                        if (statusBar) statusBar.className = 'status-bar';
+                        alert('Study plans generated successfully! Refreshing dashboard...');
+                        window.location.reload();
+                    }
+
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        if (errBox) {
+            errBox.textContent = error.message;
+            errBox.className = 'error-box visible';
+        } else {
+            alert('Error: ' + error.message);
+        }
+        if (statusBar) statusBar.className = 'status-bar';
+    } finally {
+        if (btn) btn.disabled = false;
+        if (heroBtn) heroBtn.disabled = false;
+    }
+}
+
+function clearOutput() {
+    document.getElementById('planError').className = 'error-box';
+    document.getElementById('planStatus').className = 'status-bar';
+}
+
+</script>
+
+{% endblock %}

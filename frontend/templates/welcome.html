@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis — Your AI Study Companion</title>
+    <meta name="description" content="Aegis is an agentic AI study Companion that helps students plan, prepare, and improve their study process automatically. Upload your timetable, get a weekly study plan, summaries, quizzes, and more.">
+    <script>
+    (function() {
+        const theme = localStorage.getItem('aegis_theme') || 'light';
+        const resolvedTheme = theme === 'auto'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : theme;
+        document.documentElement.setAttribute('data-theme', resolvedTheme);
+    })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/welcome.css') }}">
+</head>
+<body class="wl-body">
+
+    <!-- ══════════════ NAVBAR ══════════════ -->
+    <header class="wl-nav" id="wl-nav">
+        <div class="wl-nav-inner">
+            <a href="{{ url_for('welcome') }}" class="wl-logo" id="wl-logo-link">
+                <img src="{{ url_for('static', filename='images/aegis-logo.png') }}" alt="Aegis logo" class="wl-logo-img">
+                <span class="wl-logo-text">Aegis</span>
+            </a>
+            <nav class="wl-nav-links" aria-label="Main navigation">
+                <a href="#how-it-works" class="wl-nav-link">How It Works</a>
+                <a href="#features" class="wl-nav-link">Features</a>
+                <a href="#why-aegis" class="wl-nav-link">Why Aegis</a>
+            </nav>
+            <div class="wl-nav-actions">
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('reflection') }}" class="wl-btn wl-btn-primary" id="nav-dashboard-btn">
+                        <i class="fa-solid fa-mirror"></i> Go to Reflection
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="wl-btn wl-btn-ghost" id="nav-login-btn">Login</a>
+                    <a href="{{ url_for('register') }}" class="wl-btn wl-btn-primary" id="nav-signup-btn">Get Started</a>
+                {% endif %}
+            </div>
+            <button class="wl-hamburger" id="wl-hamburger" aria-label="Toggle menu" aria-expanded="false">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+        <!-- Mobile menu -->
+        <div class="wl-mobile-menu" id="wl-mobile-menu">
+            <a href="#how-it-works" class="wl-mobile-link">How It Works</a>
+            <a href="#features" class="wl-mobile-link">Features</a>
+            <a href="#why-aegis" class="wl-mobile-link">Why Aegis</a>
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('reflection') }}" class="wl-btn wl-btn-primary wl-mobile-cta" id="mobile-dashboard-btn">
+                    <i class="fa-solid fa-mirror"></i> Go to Reflection
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="wl-mobile-link" id="mobile-login-btn">Login</a>
+                <a href="{{ url_for('register') }}" class="wl-btn wl-btn-primary wl-mobile-cta" id="mobile-signup-btn">Get Started Free</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+
+        <!-- ══════════════ HERO ══════════════ -->
+        <section class="wl-hero" id="hero">
+            <div class="wl-hero-glow wl-hero-glow--left"></div>
+            <div class="wl-hero-glow wl-hero-glow--right"></div>
+            <div class="wl-container">
+                <div class="wl-hero-badge">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>AI-Powered Study Companion</span>
+                </div>
+                <h1 class="wl-hero-title">
+                    Study Smarter.<br>
+                    <span class="wl-gradient-text">Not Harder.</span>
+                </h1>
+                <p class="wl-hero-sub">
+                    Aegis is your proactive AI study partner. Upload your timetable, and Aegis automatically builds your weekly plan, preps you before class, and keeps your study habits on track — all in one place.
+                </p>
+                <div class="wl-hero-cta-row">
+                    {% if session.get('user_id') %}
+                        <a href="{{ url_for('reflection') }}" class="wl-btn wl-btn-primary wl-btn-lg" id="hero-dashboard-btn">
+                            <i class="fa-solid fa-mirror"></i>
+                            Go to Reflection
+                        </a>
+                        <a href="{{ url_for('logout') }}" class="wl-btn wl-btn-outline wl-btn-lg" id="hero-logout-btn">
+                            <i class="fa-solid fa-sign-out-alt"></i>
+                            Logout
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('register') }}" class="wl-btn wl-btn-primary wl-btn-lg" id="hero-getstarted-btn">
+                            <i class="fa-solid fa-rocket"></i>
+                            Get Started — It's Free
+                        </a>
+                        <a href="{{ url_for('login') }}" class="wl-btn wl-btn-outline wl-btn-lg" id="hero-login-btn">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                            Login
+                        </a>
+                    {% endif %}
+                </div>
+                {% if not session.get('user_id') %}
+                <p class="wl-hero-note">No credit card required &nbsp;·&nbsp; Set up in minutes</p>
+                {% endif %}
+
+                <!-- Hero app preview cards -->
+                <div class="wl-hero-preview">
+                    <div class="wl-preview-card wl-preview-main" aria-label="Weekly Study Plan preview">
+                        <div class="wl-preview-card-header">
+                            <div class="wl-preview-card-dot wl-dot-red"></div>
+                            <div class="wl-preview-card-dot wl-dot-yellow"></div>
+                            <div class="wl-preview-card-dot wl-dot-green"></div>
+                            <span class="wl-preview-card-title">Weekly Study Plan</span>
+                        </div>
+                        <div class="wl-preview-week-grid">
+                            <div class="wl-pw-day">
+                                <span class="wl-pw-label">Mon</span>
+                                <div class="wl-pw-bar wl-pw-bar--full"></div>
+                                <div class="wl-pw-bar wl-pw-bar--med"></div>
+                            </div>
+                            <div class="wl-pw-day">
+                                <span class="wl-pw-label">Tue</span>
+                                <div class="wl-pw-bar wl-pw-bar--med"></div>
+                                <div class="wl-pw-bar wl-pw-bar--short"></div>
+                            </div>
+                            <div class="wl-pw-day">
+                                <span class="wl-pw-label">Wed</span>
+                                <div class="wl-pw-bar wl-pw-bar--full"></div>
+                            </div>
+                            <div class="wl-pw-day">
+                                <span class="wl-pw-label">Thu</span>
+                                <div class="wl-pw-bar wl-pw-bar--short"></div>
+                                <div class="wl-pw-bar wl-pw-bar--med"></div>
+                            </div>
+                            <div class="wl-pw-day">
+                                <span class="wl-pw-label">Fri</span>
+                                <div class="wl-pw-bar wl-pw-bar--med"></div>
+                            </div>
+                        </div>
+                        <div class="wl-preview-stat-row">
+                            <div class="wl-preview-stat">
+                                <span class="wl-preview-stat-val">8</span>
+                                <span class="wl-preview-stat-label">Sessions planned</span>
+                            </div>
+                            <div class="wl-preview-stat">
+                                <span class="wl-preview-stat-val">3</span>
+                                <span class="wl-preview-stat-label">Modules covered</span>
+                            </div>
+                            <div class="wl-preview-stat">
+                                <span class="wl-preview-stat-val">87%</span>
+                                <span class="wl-preview-stat-label">On-track score</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wl-preview-side">
+                        <div class="wl-preview-card wl-preview-sm" aria-label="Pre-class summary preview">
+                            <div class="wl-preview-sm-icon"><i class="fa-solid fa-book-open-reader"></i></div>
+                            <div>
+                                <div class="wl-preview-sm-title">Today's Pre-Class Brief</div>
+                                <div class="wl-preview-sm-sub">CS2040 · Data Structures</div>
+                            </div>
+                            <span class="wl-preview-sm-badge">Ready</span>
+                        </div>
+                        <div class="wl-preview-card wl-preview-sm" aria-label="Quiz preview">
+                            <div class="wl-preview-sm-icon" style="background: rgba(236,72,153,0.1); color:#db2777;"><i class="fa-solid fa-circle-question"></i></div>
+                            <div>
+                                <div class="wl-preview-sm-title">Quick Quiz · Week 3</div>
+                                <div class="wl-preview-sm-sub">5 questions · 4 min</div>
+                            </div>
+                            <span class="wl-preview-sm-badge" style="background:rgba(236,72,153,0.12);color:#db2777;">New</span>
+                        </div>
+                        <div class="wl-preview-card wl-preview-sm" aria-label="Study tracking preview">
+                            <div class="wl-preview-sm-icon" style="background:rgba(16,185,129,0.1);color:#059669;"><i class="fa-solid fa-chart-line"></i></div>
+                            <div>
+                                <div class="wl-preview-sm-title">Study Streak</div>
+                                <div class="wl-preview-sm-sub">🔥 5 days in a row</div>
+                            </div>
+                            <span class="wl-preview-sm-badge" style="background:rgba(16,185,129,0.12);color:#059669;">+12%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════ PROBLEM SECTION ══════════════ -->
+        <section class="wl-section wl-section--light" id="problem">
+            <div class="wl-container">
+                <div style="text-align: center;">
+                    <div class="wl-section-label">The Problem</div>
+                </div>
+                <h2 class="wl-section-title">Sound familiar?</h2>
+                <p class="wl-section-sub">Students face the same pain points every semester. Aegis was built to solve exactly these.</p>
+                <div class="wl-problem-grid">
+                    <div class="wl-problem-card" data-animate>
+                        <div class="wl-problem-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+                        <h3>No study plan</h3>
+                        <p>You know you should study, but figuring out when and what to study feels overwhelming before you even start.</p>
+                    </div>
+                    <div class="wl-problem-card" data-animate>
+                        <div class="wl-problem-icon" style="background:rgba(236,72,153,0.1);color:#db2777;"><i class="fa-solid fa-person-running"></i></div>
+                        <h3>Always catching up</h3>
+                        <p>You only realize you're lost after the lecture. By then, review takes twice as long and anxiety is already there.</p>
+                    </div>
+                    <div class="wl-problem-card" data-animate>
+                        <div class="wl-problem-icon" style="background:rgba(234,179,8,0.1);color:#a16207;"><i class="fa-solid fa-clock"></i></div>
+                        <h3>Procrastination</h3>
+                        <p>Without a clear, manageable plan, every study session feels like climbing a mountain. So you delay until it's too late.</p>
+                    </div>
+                    <div class="wl-problem-card" data-animate>
+                        <div class="wl-problem-icon" style="background:rgba(239,68,68,0.1);color:#b91c1c;"><i class="fa-solid fa-layer-group"></i></div>
+                        <h3>Information scattered</h3>
+                        <p>Timetables, deadlines, module notes, and resources live in five different places. Context-switching destroys focus.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════ HOW IT WORKS ══════════════ -->
+        <section class="wl-section" id="how-it-works">
+            <div class="wl-container">
+                <div style="text-align: center;">
+                    <div class="wl-section-label">The Process</div>
+                </div>
+                <h2 class="wl-section-title">How Aegis works</h2>
+                <p class="wl-section-sub">Set up once. Let Aegis handle the planning every week, automatically.</p>
+
+                <div class="wl-steps">
+                    <div class="wl-step" data-animate>
+                        <div class="wl-step-number">01</div>
+                        <div class="wl-step-content">
+                            <div class="wl-step-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+                            <h3 class="wl-step-title">Upload your timetables</h3>
+                            <p class="wl-step-desc">Drag and drop your class timetable and module files. Aegis accepts PDFs, spreadsheets, and more.</p>
+                        </div>
+                    </div>
+                    <div class="wl-step-connector"><i class="fa-solid fa-arrow-down"></i></div>
+                    <div class="wl-step" data-animate>
+                        <div class="wl-step-number">02</div>
+                        <div class="wl-step-content">
+                            <div class="wl-step-icon" style="background:rgba(124,58,237,0.1);color:#7c3aed;"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                            <h3 class="wl-step-title">Aegis extracts & understands</h3>
+                            <p class="wl-step-desc">Our AI reads your schedules, modules, and deadlines—building a complete picture of your academic life.</p>
+                        </div>
+                    </div>
+                    <div class="wl-step-connector"><i class="fa-solid fa-arrow-down"></i></div>
+                    <div class="wl-step" data-animate>
+                        <div class="wl-step-number">03</div>
+                        <div class="wl-step-content">
+                            <div class="wl-step-icon" style="background:rgba(16,185,129,0.1);color:#059669;"><i class="fa-solid fa-calendar-check"></i></div>
+                            <h3 class="wl-step-title">Get your weekly study plan</h3>
+                            <p class="wl-step-desc">A personalised weekly plan is generated, balancing your commitments and study needs automatically.</p>
+                        </div>
+                    </div>
+                    <div class="wl-step-connector"><i class="fa-solid fa-arrow-down"></i></div>
+                    <div class="wl-step" data-animate>
+                        <div class="wl-step-number">04</div>
+                        <div class="wl-step-content">
+                            <div class="wl-step-icon" style="background:rgba(236,72,153,0.1);color:#db2777;"><i class="fa-solid fa-book-open-reader"></i></div>
+                            <h3 class="wl-step-title">Pre-class summaries & quizzes</h3>
+                            <p class="wl-step-desc">Before each class, get an AI-generated brief so you walk in prepared. After class, reinforce with quizzes and flashcards.</p>
+                        </div>
+                    </div>
+                    <div class="wl-step-connector"><i class="fa-solid fa-arrow-down"></i></div>
+                    <div class="wl-step" data-animate>
+                        <div class="wl-step-number">05</div>
+                        <div class="wl-step-content">
+                            <div class="wl-step-icon" style="background:rgba(234,179,8,0.1);color:#a16207;"><i class="fa-solid fa-chart-line"></i></div>
+                            <h3 class="wl-step-title">Track habits & improve</h3>
+                            <p class="wl-step-desc">Aegis tracks your study behaviour, surfaces insights, and nudges you toward better habits week after week.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════ KEY FEATURES ══════════════ -->
+        <section class="wl-section wl-section--light" id="features">
+            <div class="wl-container">
+                <div style="text-align: center;">
+                    <div class="wl-section-label">Features</div>
+                </div>
+                <h2 class="wl-section-title">Everything you need to study better</h2>
+                <p class="wl-section-sub">Six powerful tools working together, so your study life is finally under control.</p>
+
+                <div class="wl-features-grid">
+                    <div class="wl-feature-card" data-animate>
+                        <div class="wl-feature-icon" style="background:linear-gradient(135deg,rgba(79,70,229,0.15),rgba(124,58,237,0.10));">
+                            <i class="fa-solid fa-brain" style="color:#4f46e5;"></i>
+                        </div>
+                        <h3 class="wl-feature-title">Smart Weekly Planner</h3>
+                        <p class="wl-feature-desc">Automatically generated weekly study schedules tailored to your timetable, workload, and personal preferences.</p>
+                        <div class="wl-feature-tag">Auto-generated</div>
+                    </div>
+                    <div class="wl-feature-card" data-animate>
+                        <div class="wl-feature-icon" style="background:linear-gradient(135deg,rgba(236,72,153,0.15),rgba(244,63,94,0.10));">
+                            <i class="fa-solid fa-book-open-reader" style="color:#db2777;"></i>
+                        </div>
+                        <h3 class="wl-feature-title">Pre-Class Summaries</h3>
+                        <p class="wl-feature-desc">AI-written summaries delivered before each lesson, so you walk in with context and confidence every time.</p>
+                        <div class="wl-feature-tag" style="background:rgba(236,72,153,0.10);color:#db2777;">Before class</div>
+                    </div>
+                    <div class="wl-feature-card" data-animate>
+                        <div class="wl-feature-icon" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.10));">
+                            <i class="fa-solid fa-circle-question" style="color:#059669;"></i>
+                        </div>
+                        <h3 class="wl-feature-title">Quizzes & Flashcards</h3>
+                        <p class="wl-feature-desc">AI-generated quizzes and flashcards aligned to your module topics help lock in knowledge and flag weak areas.</p>
+                        <div class="wl-feature-tag" style="background:rgba(16,185,129,0.10);color:#059669;">Active recall</div>
+                    </div>
+                    <div class="wl-feature-card" data-animate>
+                        <div class="wl-feature-icon" style="background:linear-gradient(135deg,rgba(234,179,8,0.15),rgba(202,138,4,0.10));">
+                            <i class="fa-solid fa-graduation-cap" style="color:#a16207;"></i>
+                        </div>
+                        <h3 class="wl-feature-title">Learning Resources</h3>
+                        <p class="wl-feature-desc">Curated resources linked to your specific modules and topics — relevant reading, videos, and references on demand.</p>
+                        <div class="wl-feature-tag" style="background:rgba(234,179,8,0.10);color:#a16207;">Curated</div>
+                    </div>
+                    <div class="wl-feature-card" data-animate>
+                        <div class="wl-feature-icon" style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(220,38,38,0.10));">
+                            <i class="fa-solid fa-stopwatch" style="color:#b91c1c;"></i>
+                        </div>
+                        <h3 class="wl-feature-title">Study Tracking</h3>
+                        <p class="wl-feature-desc">Monitor study sessions, streaks, and completion rates. See your performance trends and get actionable weekly reflections.</p>
+                        <div class="wl-feature-tag" style="background:rgba(239,68,68,0.10);color:#b91c1c;">Habit-forming</div>
+                    </div>
+                    <div class="wl-feature-card" data-animate>
+                        <div class="wl-feature-icon" style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(167,139,250,0.10));">
+                            <i class="fa-solid fa-robot" style="color:#6366f1;"></i>
+                        </div>
+                        <h3 class="wl-feature-title">AI Study Support</h3>
+                        <p class="wl-feature-desc">Aegis proactively surfaces recommendations, reminders, and insights — it's not just a chatbot, it's your study Companion.</p>
+                        <div class="wl-feature-tag" style="background:rgba(99,102,241,0.10);color:#6366f1;">Proactive AI</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════ WHY AEGIS ══════════════ -->
+        <section class="wl-section" id="why-aegis">
+            <div class="wl-container">
+                <div style="text-align: center;">
+                    <div class="wl-section-label">Why Aegis</div>
+                </div>
+                <h2 class="wl-section-title">Different by design</h2>
+                <p class="wl-section-sub">Aegis is not another generic study app. Here is what makes it different.</p>
+
+                <div class="wl-diff-grid">
+                    <div class="wl-diff-col wl-diff-col--bad">
+                        <div class="wl-diff-col-header">
+                            <i class="fa-solid fa-xmark wl-diff-icon-bad"></i>
+                            <span>Typical Study Apps</span>
+                        </div>
+                        <ul class="wl-diff-list">
+                            <li><i class="fa-solid fa-xmark"></i> Reactive — answer questions only when you ask</li>
+                            <li><i class="fa-solid fa-xmark"></i> No connection to your real timetable data</li>
+                            <li><i class="fa-solid fa-xmark"></i> You still have to plan everything yourself</li>
+                            <li><i class="fa-solid fa-xmark"></i> Prep happens after class — already behind</li>
+                            <li><i class="fa-solid fa-xmark"></i> Tools scattered across multiple apps</li>
+                        </ul>
+                    </div>
+                    <div class="wl-diff-vs"><span>VS</span></div>
+                    <div class="wl-diff-col wl-diff-col--good">
+                        <div class="wl-diff-col-header">
+                            <i class="fa-solid fa-check wl-diff-icon-good"></i>
+                            <span>Aegis</span>
+                        </div>
+                        <ul class="wl-diff-list">
+                            <li><i class="fa-solid fa-check"></i> Proactive — surfaces insights before you need them</li>
+                            <li><i class="fa-solid fa-check"></i> Built on your actual timetable and module data</li>
+                            <li><i class="fa-solid fa-check"></i> Auto-generates your weekly plan for you</li>
+                            <li><i class="fa-solid fa-check"></i> Pre-class summaries prepare you before lectures</li>
+                            <li><i class="fa-solid fa-check"></i> Planning, prep, and reflection in one system</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════ PRODUCT SHOWCASE ══════════════ -->
+        <section class="wl-section wl-section--light" id="preview">
+            <div class="wl-container">
+                <div style="text-align: center;">
+                    <div class="wl-section-label">Product Preview</div>
+                </div>
+                <h2 class="wl-section-title">What you'll get inside</h2>
+                <p class="wl-section-sub">Four key views that bring your academic life into one focused workspace.</p>
+
+                <div class="wl-showcase-grid">
+                    <div class="wl-showcase-card" data-animate>
+                        <div class="wl-showcase-thumb wl-showcase-thumb--plan">
+                            <div class="wl-showcase-thumb-inner">
+                                <i class="fa-solid fa-calendar-days"></i>
+                                <div class="wl-showcase-mock-bars">
+                                    <div class="wl-mock-bar" style="width:80%;"></div>
+                                    <div class="wl-mock-bar" style="width:55%;"></div>
+                                    <div class="wl-mock-bar" style="width:70%;"></div>
+                                    <div class="wl-mock-bar" style="width:40%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wl-showcase-info">
+                            <h3>Weekly Study Plan</h3>
+                            <p>Your full week at a glance — sessions, modules, and priorities all planned out for you.</p>
+                        </div>
+                    </div>
+                    <div class="wl-showcase-card" data-animate>
+                        <div class="wl-showcase-thumb wl-showcase-thumb--daily">
+                            <div class="wl-showcase-thumb-inner">
+                                <i class="fa-solid fa-book-open-reader"></i>
+                                <div class="wl-showcase-mock-bars">
+                                    <div class="wl-mock-bar" style="width:90%;background:rgba(219,39,119,0.3);"></div>
+                                    <div class="wl-mock-bar" style="width:60%;background:rgba(219,39,119,0.3);"></div>
+                                    <div class="wl-mock-bar" style="width:75%;background:rgba(219,39,119,0.3);"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wl-showcase-info">
+                            <h3>Daily Learning Hub</h3>
+                            <p>Pre-class briefs, quizzes, and resources waiting for you each morning before you head to class.</p>
+                        </div>
+                    </div>
+                    <div class="wl-showcase-card" data-animate>
+                        <div class="wl-showcase-thumb wl-showcase-thumb--upload">
+                            <div class="wl-showcase-thumb-inner">
+                                <i class="fa-solid fa-file-arrow-up"></i>
+                                <div class="wl-showcase-mock-bars">
+                                    <div class="wl-mock-bar" style="width:100%;background:rgba(5,150,105,0.3);"></div>
+                                    <div class="wl-mock-bar" style="width:65%;background:rgba(5,150,105,0.3);"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wl-showcase-info">
+                            <h3>Upload & Setup</h3>
+                            <p>A clean, guided upload experience. Drop your files and let Aegis handle the heavy lifting.</p>
+                        </div>
+                    </div>
+                    <div class="wl-showcase-card" data-animate>
+                        <div class="wl-showcase-thumb wl-showcase-thumb--track">
+                            <div class="wl-showcase-thumb-inner">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <div class="wl-showcase-mock-bars">
+                                    <div class="wl-mock-bar" style="width:45%;background:rgba(161,98,7,0.3);"></div>
+                                    <div class="wl-mock-bar" style="width:70%;background:rgba(161,98,7,0.3);"></div>
+                                    <div class="wl-mock-bar" style="width:95%;background:rgba(161,98,7,0.3);"></div>
+                                    <div class="wl-mock-bar" style="width:60%;background:rgba(161,98,7,0.3);"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wl-showcase-info">
+                            <h3>Progress Tracking</h3>
+                            <p>Weekly streaks, habit reviews, and reflection cards that help you understand how you're improving.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════ TEAM / PROJECT ══════════════ -->
+        <section class="wl-section" id="team">
+            <div class="wl-container">
+                <div class="wl-team-card">
+                    <div class="wl-team-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="wl-team-text">
+                        <div class="wl-section-label" style="text-align:left;margin-bottom:6px;">Built by students, for students</div>
+                        <h2 class="wl-team-title">A student hackathon project</h2>
+                        <p class="wl-team-desc">
+                            Aegis was designed and built by a student team who experienced these exact study challenges first-hand. Our goal was simple: create the study tool we always wished we had — intelligent, proactive, and built around real student workflows.
+                        </p>
+                        <div class="wl-team-tags">
+                            <span class="wl-team-tag"><i class="fa-solid fa-bolt"></i> Hackathon Project</span>
+                            <span class="wl-team-tag"><i class="fa-solid fa-heart"></i> Student-Built</span>
+                            <span class="wl-team-tag"><i class="fa-solid fa-robot"></i> AI-Powered</span>
+                            <span class="wl-team-tag"><i class="fa-solid fa-globe"></i> Open to All Students</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ══════════════ FOOTER ══════════════ -->
+    <footer class="wl-footer">
+        <div class="wl-container">
+            <div class="wl-footer-inner">
+                <p class="wl-footer-copy">© 2026 Aegis — AI Study Companion. Built with care by students.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    (function() {
+        function applyAegisTheme() {
+            const theme = localStorage.getItem('aegis_theme') || 'light';
+            const fontSize = localStorage.getItem('aegis_font_size') || '16';
+            const resolvedTheme = theme === 'auto'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : theme;
+            document.documentElement.setAttribute('data-theme', resolvedTheme);
+            document.body.setAttribute('data-theme', resolvedTheme);
+            document.documentElement.style.fontSize = fontSize + 'px';
+            document.body.style.fontSize = fontSize + 'px';
+        }
+
+        applyAegisTheme();
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+            if ((localStorage.getItem('aegis_theme') || 'light') === 'auto') {
+                applyAegisTheme();
+            }
+        });
+    })();
+
+    // ── Navbar: scroll shadow ──
+    (function () {
+        const nav = document.getElementById('wl-nav');
+        window.addEventListener('scroll', function () {
+            nav.classList.toggle('wl-nav--scrolled', window.scrollY > 20);
+        }, { passive: true });
+    })();
+
+    // ── Mobile hamburger ──
+    (function () {
+        const btn = document.getElementById('wl-hamburger');
+        const menu = document.getElementById('wl-mobile-menu');
+        btn.addEventListener('click', function () {
+            const open = menu.classList.toggle('wl-mobile-menu--open');
+            btn.setAttribute('aria-expanded', String(open));
+        });
+        // Close when a link is clicked
+        menu.querySelectorAll('a').forEach(function (a) {
+            a.addEventListener('click', function () {
+                menu.classList.remove('wl-mobile-menu--open');
+                btn.setAttribute('aria-expanded', 'false');
+            });
+        });
+    })();
+
+    // ── Smooth scroll for anchor links ──
+    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+
+    // ── Intersection-observer entrance animations ──
+    (function () {
+        const els = document.querySelectorAll('[data-animate]');
+        if (!els.length) return;
+        const ob = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('wl-in-view');
+                    ob.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12 });
+        els.forEach(function (el) { ob.observe(el); });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Review Extraction | Aegis{% endblock %}
+
+{% block content %}
+<style>
+.review-shell { display:grid; gap:18px; }
+.review-hero, .review-card { background:#fff; border:1px solid #e6eaf2; border-radius:24px; box-shadow:0 12px 30px rgba(15,23,42,.05); }
+.review-hero { padding:28px; }
+.review-card { padding:22px; }
+.review-eyebrow { display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:#eef4ff; color:#315efb; font-size:.86rem; font-weight:700; letter-spacing:.02em; }
+.review-hero h1 { margin:14px 0 8px; font-size:2rem; color:#0f172a; }
+.review-hero p { margin:0; color:#475569; max-width:760px; line-height:1.65; }
+.review-topbar { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
+.status-pill { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px; font-weight:700; font-size:.9rem; }
+.status-pill.ready { background:#ecfdf3; color:#027a48; }
+.status-pill.needs_review { background:#fff7e6; color:#b54708; }
+.meta-note { color:#64748b; font-size:.92rem; margin-top:10px; }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:14px; margin-top:20px; }
+.stat-card { background:#f8fafc; border:1px solid #edf2f7; border-radius:18px; padding:16px; }
+.stat-label { margin:0 0 6px; color:#64748b; font-size:.88rem; }
+.stat-value { margin:0; color:#0f172a; font-size:1.6rem; font-weight:800; }
+.section-title { margin:0 0 6px; color:#0f172a; font-size:1.15rem; }
+.section-subtitle { margin:0 0 16px; color:#64748b; line-height:1.6; }
+.action-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; }
+.btnx { display:inline-flex; align-items:center; gap:8px; padding:11px 16px; border-radius:14px; text-decoration:none; font-weight:700; border:1px solid transparent; }
+.btnx-primary { background:#315efb; color:#fff; }
+.btnx-secondary { background:#fff; color:#0f172a; border-color:#dbe3ef; }
+.table-wrap { overflow:auto; border:1px solid #edf2f7; border-radius:18px; }
+.review-table { width:100%; border-collapse:collapse; min-width:760px; }
+.review-table th, .review-table td { text-align:left; padding:12px 14px; border-bottom:1px solid #edf2f7; vertical-align:top; }
+.review-table th { background:#f8fafc; color:#475569; font-size:.86rem; text-transform:uppercase; letter-spacing:.04em; }
+.review-table tr:last-child td { border-bottom:none; }
+.code-chip { display:inline-block; padding:4px 10px; border-radius:999px; background:#eef4ff; color:#315efb; font-size:.82rem; font-weight:700; }
+.empty-state { padding:20px; border:1px dashed #dbe3ef; border-radius:18px; color:#64748b; background:#fbfdff; }
+.remark-list { margin:0; padding-left:18px; color:#475569; line-height:1.7; }
+.file-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px; }
+.file-card { border:1px solid #edf2f7; border-radius:18px; padding:16px; background:#fbfdff; }
+.file-card h3 { margin:0 0 8px; font-size:1rem; color:#0f172a; }
+.file-card p { margin:6px 0; color:#475569; }
+.detail-tag { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#f8fafc; color:#475569; font-size:.82rem; font-weight:700; }
+.raw-json { margin-top:12px; background:#0f172a; color:#e2e8f0; padding:16px; border-radius:18px; overflow:auto; font-size:.88rem; line-height:1.55; }
+summary { cursor:pointer; font-weight:700; color:#0f172a; }
+@media (max-width: 768px) { .review-hero, .review-card { padding:18px; } .review-hero h1 { font-size:1.55rem; } }
+</style>
+
+<section class="review-shell">
+    <div class="review-hero">
+        <div class="review-topbar">
+            <div>
+                <span class="review-eyebrow"><i class="fa-solid fa-magnifying-glass-chart"></i> Extraction Review</span>
+                <h1>Check your extracted timetable data</h1>
+                <p>Before generating the weekly plan, review what the extraction agent found from your uploaded files. This page helps you quickly see whether the issue is in extraction or in planning.</p>
+                <div class="meta-note">Processed at: <strong>{{ cached_at or '—' }}</strong></div>
+            </div>
+            <div>
+                <div class="status-pill {{ 'ready' if status == 'ready' else 'needs_review' }}">
+                    <i class="fa-solid {{ 'fa-circle-check' if status == 'ready' else 'fa-triangle-exclamation' }}"></i>
+                    {{ 'Looks good' if status == 'ready' else 'Needs review' }}
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><p class="stat-label">Modules</p><p class="stat-value">{{ summary_cards.modules }}</p></div>
+            <div class="stat-card"><p class="stat-label">Class Sessions</p><p class="stat-value">{{ summary_cards.class_sessions }}</p></div>
+            <div class="stat-card"><p class="stat-label">Module Rows</p><p class="stat-value">{{ summary_cards.module_schedule }}</p></div>
+            <div class="stat-card"><p class="stat-label">Assessments</p><p class="stat-value">{{ summary_cards.assessments }}</p></div>
+            <div class="stat-card"><p class="stat-label">Special Weeks</p><p class="stat-value">{{ summary_cards.special_weeks }}</p></div>
+            <div class="stat-card"><p class="stat-label">Remarks</p><p class="stat-value">{{ summary_cards.remarks }}</p></div>
+        </div>
+
+        <div class="action-row">
+            <a class="btnx btnx-primary" href="{{ url_for('plan.plan_page') }}"><i class="fa-solid fa-brain"></i> Generate study plan</a>
+            <a class="btnx btnx-secondary" href="{{ url_for('upload.upload') }}"><i class="fa-solid fa-pen"></i> Re-upload / edit setup</a>
+            <a class="btnx btnx-secondary" href="{{ url_for('upload.review_extraction_raw') }}" target="_blank"><i class="fa-solid fa-code"></i> Open raw JSON</a>
+        </div>
+    </div>
+
+    <div class="review-card">
+        <h2 class="section-title">Uploaded files</h2>
+        <p class="section-subtitle">These are the files currently tied to this extraction run.</p>
+        {% if uploaded_files %}
+        <div class="file-grid">
+            {% for file in uploaded_files %}
+            <div class="file-card">
+                <h3>{{ file.original_filename }}</h3>
+                <p><span class="detail-tag"><i class="fa-solid fa-file-lines"></i> {{ file.file_role.replace('_', ' ') }}</span></p>
+                <p><strong>Uploaded:</strong> {{ file.uploaded_at }}</p>
+                <p><strong>Stored name:</strong> {{ file.stored_filename }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">No uploaded files were found for this extraction cache.</div>
+        {% endif %}
+    </div>
+
+    <div class="review-card">
+        <h2 class="section-title">Per-file extraction result</h2>
+        <p class="section-subtitle">Use this section to see which file extracted successfully and which one failed.</p>
+        {% if per_file_results %}
+        <div class="table-wrap">
+            <table class="review-table">
+                <thead><tr><th>File</th><th>Role</th><th>Status</th><th>Notes</th></tr></thead>
+                <tbody>
+                    {% for item in per_file_results %}
+                    <tr>
+                        <td>{{ item.file_name }}</td>
+                        <td>{{ item.file_role }}</td>
+                        <td><span class="code-chip">{{ item.status }}</span></td>
+                        <td>{{ item.error if item.status == 'error' else 'Extracted successfully' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">No per-file extraction details were saved.</div>
+        {% endif %}
+    </div>
+
+    <div class="review-card">
+        <h2 class="section-title">Extracted modules</h2>
+        {% if extracted.modules %}
+        <div class="table-wrap">
+            <table class="review-table">
+                <thead><tr><th>Module Code</th><th>Module Name</th><th>Matched DB Module</th><th>Source</th></tr></thead>
+                <tbody>
+                    {% for module in extracted.modules %}
+                    <tr>
+                        <td>{{ module.module_code or '—' }}</td>
+                        <td>{{ module.module_name or module.module_alias or '—' }}</td>
+                        <td>{{ module.db_module_code or '—' }} {{ ('- ' ~ module.db_module_name) if module.db_module_name else '' }}</td>
+                        <td>{{ module.source_file or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No modules were extracted.</div>{% endif %}
+    </div>
+
+    <div class="review-card">
+        <h2 class="section-title">Extracted class sessions</h2>
+        {% if extracted.class_sessions %}
+        <div class="table-wrap">
+            <table class="review-table">
+                <thead><tr><th>Day</th><th>Time</th><th>Module</th><th>Session Type</th><th>Location</th><th>Source</th></tr></thead>
+                <tbody>
+                    {% for row in extracted.class_sessions %}
+                    <tr>
+                        <td>{{ row.day or '—' }}</td>
+                        <td>{{ (row.start_time or '—') ~ ' - ' ~ (row.end_time or '—') }}</td>
+                        <td>{{ row.module_code or row.module_name or row.module_alias or '—' }}</td>
+                        <td>{{ row.session_type or '—' }}</td>
+                        <td>{{ row.location or '—' }}</td>
+                        <td>{{ row.source_file or '—' }}{% if row.source_page %} · page {{ row.source_page }}{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No class sessions were extracted.</div>{% endif %}
+    </div>
+
+    <div class="review-card">
+        <h2 class="section-title">Extracted module schedule</h2>
+        {% if extracted.module_schedule %}
+        <div class="table-wrap">
+            <table class="review-table">
+                <thead><tr><th>Week</th><th>Module</th><th>Activities</th><th>Hours</th><th>Mode</th><th>Source</th></tr></thead>
+                <tbody>
+                    {% for row in extracted.module_schedule %}
+                    <tr>
+                        <td>{{ row.week_number or '—' }}</td>
+                        <td>{{ row.module_code or row.module_name or '—' }}</td>
+                        <td>{{ row.activities or '—' }}</td>
+                        <td>{{ row.hours or '—' }}</td>
+                        <td>{{ row.mode or '—' }}</td>
+                        <td>{{ row.source_file or '—' }}{% if row.source_page %} · page {{ row.source_page }}{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No module schedule rows were extracted.</div>{% endif %}
+    </div>
+
+    <div class="review-card">
+        <h2 class="section-title">Extracted assessments</h2>
+        {% if extracted.assessments %}
+        <div class="table-wrap">
+            <table class="review-table">
+                <thead><tr><th>Module</th><th>Title</th><th>Type</th><th>Week</th><th>Due Date</th><th>Weightage</th></tr></thead>
+                <tbody>
+                    {% for row in extracted.assessments %}
+                    <tr>
+                        <td>{{ row.module_code or row.module_name or '—' }}</td>
+                        <td>{{ row.title or '—' }}</td>
+                        <td>{{ row.assessment_type or row.milestone_type or '—' }}</td>
+                        <td>{{ row.week_number or '—' }}</td>
+                        <td>{{ row.due_date or '—' }}</td>
+                        <td>{{ row.weightage or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No assessments were extracted.</div>{% endif %}
+    </div>
+
+    <div class="review-card">
+        <h2 class="section-title">Remarks and warnings</h2>
+        <p class="section-subtitle">These are the best places to look first when extraction looks incomplete or strange.</p>
+        {% if extracted.remarks %}
+        <ul class="remark-list">
+            {% for remark in extracted.remarks %}
+            <li>{{ remark }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state">No warnings were recorded in this extraction run.</div>
+        {% endif %}
+    </div>
+
+    <div class="review-card">
+        <h2 class="section-title">Developer debug view</h2>
+        <p class="section-subtitle">Keep the normal tables for users, and use this only when you want to inspect the exact cached JSON.</p>
+        <details>
+            <summary>Show cached raw JSON</summary>
+            <pre class="raw-json">{{ raw_json }}</pre>
+        </details>
+    </div>
+</section>
+{% endblock %}

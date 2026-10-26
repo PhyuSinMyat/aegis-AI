@@ -1,0 +1,1000 @@
+<style>
+    /* ═══════════════════════════════════════════════════════════════
+   AI STUDY COACH — PREMIUM WIDGET
+   ═══════════════════════════════════════════════════════════════ */
+
+    /*
+ * CRITICAL: Both #ai-coach-bubble and #ai-coach-panel are
+ * reparented to <body> at runtime (see JS init below).
+ * This guarantees position:fixed is relative to the viewport
+ * and is never broken by ancestor backdrop-filter / transform.
+ */
+
+    /* ── Floating Trigger Button ─────────────────────────────────── */
+    #ai-coach-bubble {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        width: 52px;
+        height: 52px;
+        background: #6254D8;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(98, 84, 216, 0.3);
+        z-index: 9999;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        user-select: none;
+    }
+
+    #ai-coach-bubble:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(98, 84, 216, 0.4);
+    }
+
+    #ai-coach-bubble.is-open {
+        transform: rotate(15deg) scale(1.05);
+    }
+
+    /* ── Notification Badge ──────────────────────────────────────── */
+    #coach-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.65rem;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        border: 2.5px solid white;
+        display: none;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+        animation: coachBadgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes coachBadgePop {
+        0% {
+            transform: scale(0);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    /* ── Main Panel ──────────────────────────────────────────────── */
+    #ai-coach-panel {
+        position: fixed;
+        bottom: 96px;
+        right: 28px;
+        width: 370px;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow:
+            0 8px 30px rgba(0, 0, 0, 0.12),
+            0 0 0 1px rgba(0, 0, 0, 0.04);
+        z-index: 9998;
+        overflow: hidden;
+        display: none;
+        flex-direction: column;
+        transform-origin: bottom right;
+        max-height: min(560px, calc(100vh - 130px));
+    }
+
+    #ai-coach-panel.coach-visible {
+        display: flex;
+        animation: coachSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes coachSlideIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.85) translateY(16px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    .coach-header {
+        background: #6254D8;
+        padding: 16px 20px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    .coach-header-icon {
+        width: 36px;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: white;
+        flex-shrink: 0;
+        backdrop-filter: blur(4px);
+    }
+
+    .coach-header-text {
+        flex: 1;
+    }
+
+    .coach-header-title {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: white;
+        letter-spacing: -0.01em;
+    }
+
+    .coach-header-subtitle {
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 500;
+        margin-top: 1px;
+    }
+
+    .coach-close-btn {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.85);
+        cursor: pointer;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        transition: background 0.2s, color 0.2s;
+        flex-shrink: 0;
+    }
+
+    .coach-close-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+    }
+
+    /* ── Body ────────────────────────────────────────────────────── */
+    .coach-body {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #d1d5db transparent;
+    }
+
+    .coach-body::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .coach-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .coach-body::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 4px;
+    }
+
+    /* ── Screens ─────────────────────────────────────────────────── */
+    .coach-screen {
+        display: none;
+        padding: 20px;
+        animation: screenFade 0.22s ease;
+    }
+
+    .coach-screen.active {
+        display: block;
+    }
+
+    @keyframes screenFade {
+        from {
+            opacity: 0;
+            transform: translateX(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* ── Menu Screen ─────────────────────────────────────────────── */
+    .coach-greeting {
+        font-size: 0.88rem;
+        color: #64748b;
+        margin: 0 0 14px;
+        line-height: 1.5;
+    }
+
+    .coach-greeting strong {
+        color: #24243B;
+    }
+
+    .coach-menu-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        transition: all 0.18s ease;
+        margin-bottom: 8px;
+        text-align: left;
+        width: 100%;
+    }
+
+    .coach-menu-card:hover {
+        border-color: #c7bef5;
+        background: #F3F0FF;
+        box-shadow: 0 2px 8px rgba(98, 84, 216, 0.08);
+    }
+
+    .coach-menu-card.plan-card:hover {
+        border-color: #93c5fd;
+        background: #eff6ff;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    }
+
+    .coach-menu-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .coach-menu-icon.confusion {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+    }
+
+    .coach-menu-icon.plan {
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    }
+
+    .coach-menu-card-info {
+        flex: 1;
+    }
+
+    .coach-menu-card-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 2px;
+    }
+
+    .coach-menu-card-desc {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .coach-menu-arrow {
+        color: #d1d5db;
+        font-size: 0.75rem;
+        transition: transform 0.2s, color 0.2s;
+    }
+
+    .coach-menu-card:hover .coach-menu-arrow {
+        color: #6254D8;
+        transform: translateX(2px);
+    }
+
+    .coach-menu-card.plan-card:hover .coach-menu-arrow {
+        color: #3b82f6;
+    }
+
+    /* ── Confusion Screen ────────────────────────────────────────── */
+    .coach-section-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9ca3af;
+        margin: 0 0 8px;
+    }
+
+    .coach-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.8rem;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 0;
+        border: none;
+        background: none;
+        margin-bottom: 14px;
+        transition: color 0.15s;
+        font-weight: 600;
+    }
+
+    .coach-back-link:hover {
+        color: #6254D8;
+    }
+
+    .coach-input {
+        width: 100%;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-family: inherit;
+        font-size: 0.88rem;
+        resize: none;
+        background: #f9fafb;
+        color: #1f2937;
+        transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        box-sizing: border-box;
+        line-height: 1.5;
+    }
+
+    .coach-input:focus {
+        outline: none;
+        border-color: #6254D8;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+
+    .coach-input::placeholder {
+        color: #c4cad4;
+    }
+
+    .coach-type-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+
+    .coach-type-btn {
+        padding: 11px 8px;
+        border-radius: 11px;
+        border: 1.5px solid #e5e7eb;
+        background: #f9fafb;
+        cursor: pointer;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #4b5563;
+        text-align: center;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .coach-type-btn .type-icon {
+        font-size: 1.1rem;
+    }
+
+    .coach-type-btn:hover {
+        background: #ede9fe;
+        border-color: #a5b4fc;
+        color: #6254D8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(99, 102, 241, 0.12);
+    }
+
+    .coach-type-btn:active {
+        transform: scale(0.97);
+    }
+
+    /* ── Plan Screen ─────────────────────────────────────────────── */
+    .plan-slot {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 8px;
+    }
+
+    .plan-slot.next-up {
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        border-color: #93c5fd;
+    }
+
+    .plan-slot-time {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        white-space: nowrap;
+        min-width: 80px;
+    }
+
+    .plan-slot.next-up .plan-slot-time {
+        color: #1d4ed8;
+    }
+
+    .plan-slot-subject {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1e293b;
+        flex: 1;
+    }
+
+    .plan-slot-tag {
+        font-size: 0.65rem;
+        font-weight: 800;
+        background: #3b82f6;
+        color: #fff;
+        border-radius: 999px;
+        padding: 2px 7px;
+        white-space: nowrap;
+    }
+
+    .plan-empty {
+        text-align: center;
+        padding: 24px 12px;
+        color: #9ca3af;
+        font-size: 0.85rem;
+        line-height: 1.6;
+    }
+
+    .plan-day-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9ca3af;
+        margin: 0 0 10px;
+    }
+
+    /* ── Primary CTA ─────────────────────────────────────────────── */
+    .coach-cta {
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        border: none;
+        background: linear-gradient(135deg, #6254D8, #6254D8);
+        color: white;
+        font-weight: 700;
+        font-size: 0.88rem;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        letter-spacing: -0.01em;
+    }
+
+    .coach-cta:hover {
+        background: linear-gradient(135deg, #6254D8, #5346C7);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+    }
+
+    .coach-cta:active {
+        transform: scale(0.98);
+    }
+
+    .coach-cta:disabled {
+        background: #d1d5db;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .coach-ghost {
+        width: 100%;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1.5px solid #e5e7eb;
+        background: transparent;
+        color: #6b7280;
+        font-weight: 600;
+        font-size: 0.84rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 8px;
+    }
+
+    .coach-ghost:hover {
+        border-color: #d1d5db;
+        background: #f9fafb;
+        color: #374151;
+    }
+
+    /* ── Loading State ───────────────────────────────────────────── */
+    .coach-loading {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        padding: 32px 20px;
+        gap: 14px;
+    }
+
+    .coach-loading.active {
+        display: flex;
+    }
+
+    .coach-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .coach-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #6254D8;
+        animation: coachDotPulse 1.4s infinite ease-in-out;
+    }
+
+    .coach-dot:nth-child(2) {
+        animation-delay: 0.2s;
+        background: #818cf8;
+    }
+
+    .coach-dot:nth-child(3) {
+        animation-delay: 0.4s;
+        background: #a5b4fc;
+    }
+
+    @keyframes coachDotPulse {
+
+        0%,
+        80%,
+        100% {
+            transform: scale(0.7);
+            opacity: 0.5;
+        }
+
+        40% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .coach-loading-text {
+        font-size: 0.82rem;
+        color: #9ca3af;
+        font-weight: 500;
+    }
+
+    /* ── Response Cards ──────────────────────────────────────────── */
+    .coach-response-card {
+        display: none;
+        border-radius: 14px;
+        padding: 16px;
+        animation: screenFade 0.3s ease;
+    }
+
+    .coach-response-card.active {
+        display: block;
+    }
+
+    .coach-response-card.explanation {
+        background: linear-gradient(135deg, #fafafa, #f3f4f6);
+        border: 1.5px solid #e5e7eb;
+    }
+
+    .coach-response-card.success {
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border: 1.5px solid #bbf7d0;
+    }
+
+    .coach-response-card.review {
+        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        border: 1.5px solid #fde68a;
+    }
+
+    .coach-response-label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        margin-bottom: 10px;
+    }
+
+    .coach-response-card.explanation .coach-response-label {
+        color: #6254D8;
+    }
+
+    .coach-response-card.success .coach-response-label {
+        color: #059669;
+    }
+
+    .coach-response-card.review .coach-response-label {
+        color: #d97706;
+    }
+
+    .coach-response-body {
+        font-size: 0.89rem;
+        line-height: 1.65;
+        color: #374151;
+        margin: 0 0 14px;
+    }
+
+    .coach-response-card.success .coach-response-body {
+        color: #065f46;
+    }
+
+    .coach-response-card.review .coach-response-body {
+        color: #78350f;
+    }
+
+    /* ── Divider ─────────────────────────────────────────────────── */
+    .coach-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #e5e7eb 30%, #e5e7eb 70%, transparent);
+        margin: 6px 0 16px;
+    }
+
+    /* ── Footer accent line ──────────────────────────────────────── */
+    .coach-panel-footer {
+        padding: 10px 20px;
+        border-top: 1px solid #f3f4f6;
+        background: #fafafa;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .coach-footer-text {
+        font-size: 0.7rem;
+        color: #c4cad4;
+        font-weight: 500;
+    }
+
+    .coach-footer-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #6254D8;
+        opacity: 0.4;
+    }
+</style>
+
+<!-- ── Floating Button ──────────────────────────────────────── -->
+<div id="ai-coach-bubble" onclick="toggleCoachPanel()" title="AI Study Coach" style="position:relative;">
+    <i class="fa-solid fa-user-graduate" id="coach-bubble-icon"></i>
+    <div id="coach-badge" class="coach-badge"></div>
+</div>
+
+<!-- ── Panel ─────────────────────────────────────────────────── -->
+<div id="ai-coach-panel">
+
+    <!-- Header -->
+    <div class="coach-header">
+        <div class="coach-header-icon">
+            <i class="fa-solid fa-user-graduate"></i>
+        </div>
+        <div class="coach-header-text">
+            <h3 class="coach-header-title">Study Coach</h3>
+            <div class="coach-header-subtitle">AI-powered learning assistant</div>
+        </div>
+        <button class="coach-close-btn" onclick="toggleCoachPanel()" title="Close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <!-- Body -->
+    <div class="coach-body">
+
+        <!-- ── SCREEN: Menu ─────────────────────────────────── -->
+        <div id="coach-screen-menu" class="coach-screen active">
+            <p class="coach-greeting">
+                <strong>How can I help you?</strong><br>
+                I'm here to help you understand topics better and keep your memory sharp.
+            </p>
+
+            <button class="coach-menu-card" onclick="showScreen('confusion')">
+                <div class="coach-menu-icon confusion">💡</div>
+                <div class="coach-menu-card-info">
+                    <p class="coach-menu-card-title">I'm confused about something</p>
+                    <p class="coach-menu-card-desc">Get a clear, targeted explanation</p>
+                </div>
+                <i class="fa-solid fa-chevron-right coach-menu-arrow"></i>
+            </button>
+
+            <button class="coach-menu-card plan-card" onclick="showPlanScreen()">
+                <div class="coach-menu-icon plan">📅</div>
+                <div class="coach-menu-card-info">
+                    <p class="coach-menu-card-title">Check today's plan</p>
+                    <p class="coach-menu-card-desc">See your study sessions for today</p>
+                </div>
+                <i class="fa-solid fa-chevron-right coach-menu-arrow"></i>
+            </button>
+        </div>
+
+        <!-- ── SCREEN: Confusion ───────────────────────────── -->
+        <div id="coach-screen-confusion" class="coach-screen">
+            <button class="coach-back-link" onclick="showScreen('menu')">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+
+            <p class="coach-section-label">What's confusing you?</p>
+            <textarea id="confusion-context" class="coach-input" rows="2"
+                placeholder="e.g., Object-oriented programming inheritance…" style="margin-bottom:16px;"></textarea>
+
+            <p class="coach-section-label">How do you want it explained?</p>
+            <div class="coach-type-grid">
+                <button class="coach-type-btn" onclick="submitConfusion('concept')">
+                    <span class="type-icon">📖</span>
+                    Concept
+                </button>
+                <button class="coach-type-btn" onclick="submitConfusion('example')">
+                    <span class="type-icon">🔍</span>
+                    Example
+                </button>
+                <button class="coach-type-btn" onclick="submitConfusion('steps')">
+                    <span class="type-icon">📋</span>
+                    Step-by-Step
+                </button>
+                <button class="coach-type-btn" onclick="submitConfusion('application')">
+                    <span class="type-icon">🚀</span>
+                    Application
+                </button>
+            </div>
+        </div>
+
+        <!-- ── SCREEN: Today's Plan ────────────────────────── -->
+        <div id="coach-screen-plan" class="coach-screen">
+            <button class="coach-back-link" onclick="showScreen('menu')">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+            <div id="coach-plan-content">
+                <div class="coach-loading active" style="padding:20px 0;">
+                    <div class="coach-dots">
+                        <div class="coach-dot"></div>
+                        <div class="coach-dot"></div>
+                        <div class="coach-dot"></div>
+                    </div>
+                    <p class="coach-loading-text">Loading your schedule…</p>
+                </div>
+            </div>
+            <button class="coach-ghost" onclick="showScreen('menu')" style="margin-top:4px;">Back to menu</button>
+        </div>
+
+        <!-- ── SCREEN: Loading ─────────────────────────────── -->
+        <div id="coach-screen-loading" class="coach-screen">
+            <div class="coach-loading active">
+                <div class="coach-dots">
+                    <div class="coach-dot"></div>
+                    <div class="coach-dot"></div>
+                    <div class="coach-dot"></div>
+                </div>
+                <p class="coach-loading-text" id="coach-loading-text">Thinking…</p>
+            </div>
+        </div>
+
+        <!-- ── SCREEN: Result ──────────────────────────────── -->
+        <div id="coach-screen-result" class="coach-screen">
+            <div id="coach-response-card" class="coach-response-card explanation active">
+                <div class="coach-response-label">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span id="coach-response-label-text">Explanation</span>
+                </div>
+                <p class="coach-response-body" id="coach-response-body">…</p>
+                <button class="coach-cta" onclick="showScreen('menu')">
+                    <i class="fa-solid fa-thumbs-up"></i> Got it!
+                </button>
+                <button class="coach-ghost" id="coach-result-close-btn" onclick="toggleCoachPanel()"
+                    style="display:none;">
+                    Close
+                </button>
+            </div>
+        </div>
+
+    </div><!-- /coach-body -->
+
+    <!-- Footer -->
+    <div class="coach-panel-footer">
+        <div class="coach-footer-dot"></div>
+        <span class="coach-footer-text">Powered by Aegis AI · Responses are concise &amp; focused</span>
+    </div>
+</div>
+
+<script>
+    /* ══════════════════════════════════════════════════════════════
+       AI STUDY COACH — FRONTEND LOGIC
+       ══════════════════════════════════════════════════════════════ */
+
+    window.CoachState = {
+        isOpen: false,
+    };
+
+    /* ── Panel toggle ─────────────────────────────────────────────── */
+    function toggleCoachPanel() {
+        const panel = document.getElementById('ai-coach-panel');
+        const bubble = document.getElementById('ai-coach-bubble');
+        window.CoachState.isOpen = !window.CoachState.isOpen;
+
+        if (window.CoachState.isOpen) {
+            panel.classList.add('coach-visible');
+            bubble.classList.add('is-open');
+            document.getElementById('coach-badge').style.display = 'none';
+            showScreen('menu');
+        } else {
+            panel.classList.remove('coach-visible');
+            bubble.classList.remove('is-open');
+        }
+    }
+
+    /* ── Screen navigation ────────────────────────────────────────── */
+    function showScreen(screenId) {
+        document.querySelectorAll('.coach-screen').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById(`coach-screen-${screenId}`);
+        if (target) target.classList.add('active');
+        const body = document.querySelector('.coach-body');
+        if (body) body.scrollTop = 0;
+    }
+
+    /* ── Global hook for other pages to trigger confusion ─────────── */
+    window.triggerCoachConfusion = function (contextString) {
+        if (!window.CoachState.isOpen) toggleCoachPanel();
+        showScreen('confusion');
+        if (contextString) {
+            document.getElementById('confusion-context').value = contextString;
+        }
+    };
+
+    /* ── Show result card ─────────────────────────────────────────── */
+    function showResult({ type, label, icon, body, showClose }) {
+        const card = document.getElementById('coach-response-card');
+        const lbl = document.getElementById('coach-response-label-text');
+        const bdy = document.getElementById('coach-response-body');
+        const close = document.getElementById('coach-result-close-btn');
+
+        card.className = `coach-response-card ${type} active`;
+        lbl.innerHTML = `<i class="fa-solid ${icon}"></i> ${label}`;
+        bdy.innerHTML = body;
+        close.style.display = showClose ? 'block' : 'none';
+
+        showScreen('result');
+    }
+
+    /* ── Today's plan screen ──────────────────────────────────────── */
+    async function showPlanScreen() {
+        showScreen('plan');
+        const container = document.getElementById('coach-plan-content');
+        container.innerHTML = `
+            <div class="coach-loading active" style="padding:20px 0;">
+                <div class="coach-dots">
+                    <div class="coach-dot"></div><div class="coach-dot"></div><div class="coach-dot"></div>
+                </div>
+                <p class="coach-loading-text">Loading your schedule…</p>
+            </div>`;
+
+        try {
+            const resp = await fetch('/tracker/schedule');
+            const data = await resp.json();
+            const sessions = data.sessions || [];
+            const nextSession = data.next_session || null;
+            const today = data.today || '';
+
+            if (!sessions.length) {
+                container.innerHTML = `
+                    <div class="plan-empty">
+                        <div style="font-size:2rem;margin-bottom:8px;">📭</div>
+                        <strong>No sessions scheduled for today</strong><br>
+                        Head to the Plan page to generate your study schedule.
+                    </div>`;
+                return;
+            }
+
+            let html = `<p class="plan-day-label">📅 ${today}</p>`;
+            sessions.forEach(s => {
+                const isNext = nextSession && s.start === nextSession.start && s.subject === nextSession.subject;
+                html += `
+                    <div class="plan-slot${isNext ? ' next-up' : ''}">
+                        <span class="plan-slot-time">${s.start} – ${s.end}</span>
+                        <span class="plan-slot-subject">${s.subject}</span>
+                        ${isNext ? '<span class="plan-slot-tag">NEXT UP</span>' : ''}
+                    </div>`;
+            });
+
+            if (!nextSession) {
+                html += `<p style="font-size:.78rem;color:#9ca3af;text-align:center;margin-top:10px;">All sessions done for today 🎉</p>`;
+            }
+
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = `<div class="plan-empty">Could not load your schedule. Please try again.</div>`;
+        }
+    }
+
+    /* ── API: Submit confusion ────────────────────────────────────── */
+    async function submitConfusion(type) {
+        const context = (document.getElementById('confusion-context').value || '').trim();
+        if (!context) {
+            document.getElementById('confusion-context').focus();
+            document.getElementById('confusion-context').classList.add('coach-input-error');
+            document.getElementById('confusion-context').style.borderColor = '#f87171';
+            document.getElementById('confusion-context').style.boxShadow = '0 0 0 3px rgba(239,68,68,0.12)';
+            setTimeout(() => {
+                document.getElementById('confusion-context').style.borderColor = '';
+                document.getElementById('confusion-context').style.boxShadow = '';
+            }, 1800);
+            return;
+        }
+
+        const labels = {
+            concept: ['📖', 'Explanation'],
+            example: ['🔍', 'Example'],
+            steps: ['📋', 'Step-by-Step'],
+            application: ['🚀', 'Real-World Use'],
+        };
+
+        document.getElementById('coach-loading-text').innerText = 'Generating explanation…';
+        showScreen('loading');
+
+        try {
+            const resp = await fetch('/api/coach/confusion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ context, confusion_type: type }),
+            });
+            const data = await resp.json();
+            const [icon, label] = labels[type] || ['🎓', 'Explanation'];
+            showResult({
+                type: 'explanation',
+                label,
+                icon: 'fa-graduation-cap',
+                body: (data.explanation || '').replace(/\n/g, '<br>'),
+                showClose: false,
+            });
+        } catch (e) {
+            showScreen('confusion');
+        }
+    }
+
+    /* ── Init ─────────────────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+        /*
+         * FIX: Any ancestor with backdrop-filter, transform, or filter
+         * creates a new stacking context that breaks position:fixed —
+         * making the button appear in the wrong corner and scroll away.
+         *
+         * Solution: reparent both coach elements directly onto <body>
+         * so they are always anchored to the true viewport.
+         */
+        const bubble = document.getElementById('ai-coach-bubble');
+        const panel = document.getElementById('ai-coach-panel');
+
+        if (bubble && bubble.parentElement !== document.body) {
+            document.body.appendChild(bubble);
+        }
+        if (panel && panel.parentElement !== document.body) {
+            document.body.appendChild(panel);
+        }
+
+        /* Enforce correct fixed position via inline style as a safety net */
+        if (bubble) {
+            bubble.style.cssText += ';position:fixed!important;bottom:28px!important;right:28px!important;left:auto!important;top:auto!important;';
+        }
+        if (panel) {
+            panel.style.cssText += ';position:fixed!important;bottom:100px!important;right:28px!important;left:auto!important;top:auto!important;max-height:min(560px, calc(100vh - 130px))!important;';
+        }
+
+    });
+</script>

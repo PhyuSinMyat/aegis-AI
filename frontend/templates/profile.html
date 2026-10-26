@@ -1,0 +1,741 @@
+{% extends "base.html" %}
+{% block title %}Profile | Aegis{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --purple-50: #EEEDFE;
+    --purple-100: #CECBF6;
+    --purple-200: #AFA9EC;
+    --purple-400: #7F77DD;
+    --purple-600: #534AB7;
+    --purple-800: #3C3489;
+    --purple-900: #26215C;
+    --gray-50: #F7F6F3;
+    --gray-100: #EDEDEB;
+    --gray-200: #D3D1C7;
+    --gray-400: #888780;
+    --gray-600: #5F5E5A;
+    --gray-800: #2C2C2A;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .profile-page {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--gray-50);
+    min-height: 100vh;
+    padding: clamp(20px, 2.4vw, 40px) clamp(14px, 2.1vw, 24px) clamp(34px, 4vw, 64px);
+    color: var(--gray-800);
+  }
+
+  .profile-shell {
+    max-width: min(1480px, calc(100vw - clamp(24px, 4vw, 80px)));
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: clamp(260px, 24vw, 340px) minmax(0, 1fr);
+    gap: clamp(14px, 1.8vw, 24px);
+    align-items: start;
+  }
+
+  /* ── Sidebar ── */
+  .profile-hero-card {
+    background: #fff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--gray-100);
+    overflow: hidden;
+    position: sticky;
+    top: clamp(12px, 2vh, 24px);
+    max-height: calc(100vh - clamp(24px, 4vh, 52px));
+    overflow-y: auto;
+  }
+
+  .hero-banner {
+    height: 72px;
+    background: linear-gradient(135deg, var(--purple-600) 0%, var(--purple-400) 100%);
+  }
+
+  .hero-body {
+    padding: 0 clamp(16px, 1.8vw, 24px) clamp(18px, 2.2vw, 24px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: min(100%, 290px);
+    margin: 0 auto;
+  }
+
+  .profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--purple-100);
+    color: var(--purple-800);
+    font-size: 26px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #fff;
+    margin-top: -40px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(83,74,183,0.18);
+  }
+
+  .profile-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-body h1 {
+    margin-top: 12px;
+    font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+    font-weight: 600;
+    color: var(--gray-800);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .profile-hero-meta {
+    font-size: 13px;
+    color: var(--gray-400);
+    margin-top: 3px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .profile-hero-actions--split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: min(100%, 260px);
+    margin: 0 auto;
+  }
+
+  .profile-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+    min-height: 40px;
+    width: 100%;
+  }
+
+  .profile-action-link.secondary {
+    background: var(--gray-50);
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+  }
+
+  .profile-action-link.secondary:hover {
+    background: var(--gray-100);
+    color: var(--gray-800);
+  }
+
+  .profile-action-link.primary {
+    background: var(--purple-600);
+    color: #fff;
+  }
+
+  .profile-action-link.primary:hover {
+    background: var(--purple-800);
+  }
+
+  .profile-action-link.danger {
+    background: #fff1f2;
+    color: #b91c1c;
+    border: 1px solid #fecdd3;
+  }
+
+  .profile-action-link.danger:hover {
+    background: #ffe4e6;
+    color: #991b1b;
+  }
+
+  /* ── Edit panel ── */
+  .profile-edit-panel {
+    border: 1px solid var(--gray-100);
+    margin: 16px 0 0;
+    padding: 16px;
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    width: 100%;
+    text-align: left;
+  }
+
+  .profile-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .profile-edit-block label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray-400);
+    margin-bottom: 6px;
+  }
+
+  .profile-edit-block input[type="text"],
+  .profile-edit-block input[type="date"],
+  .profile-edit-block input[type="file"] {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--gray-800);
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .profile-edit-block input[type="text"]:focus,
+  .profile-edit-block input[type="date"]:focus {
+    border-color: var(--purple-400);
+    box-shadow: 0 0 0 3px var(--purple-50);
+  }
+
+  .profile-help-text {
+    font-size: 11px;
+    color: var(--gray-400);
+    margin-top: 5px;
+  }
+
+  .profile-edit-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .profile-save-button,
+  .profile-cancel-button {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s;
+  }
+
+  .profile-save-button {
+    background: var(--purple-600);
+    color: #fff;
+  }
+
+  .profile-save-button:hover { background: var(--purple-800); }
+
+  .profile-cancel-button {
+    background: #fff;
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+  }
+
+  .profile-cancel-button:hover { background: var(--gray-100); }
+
+  /* ── Main stack ── */
+  .profile-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .profile-section-card {
+    background: #fff;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-100);
+    box-shadow: var(--shadow-card);
+    padding: clamp(16px, 1.7vw, 24px);
+  }
+
+  .profile-section-card h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--gray-400);
+    margin-bottom: 18px;
+  }
+
+  /* ── Detail grid ── */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+  }
+
+  .profile-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+  }
+
+  .profile-card-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray-400);
+    margin-bottom: 5px;
+  }
+
+  .profile-card-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-800);
+  }
+
+  /* ── Stats ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--purple-50);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--purple-400);
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+    font-weight: 600;
+    color: var(--purple-800);
+    line-height: 1;
+  }
+
+  /* ── Table ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin: -4px;
+    padding: 4px;
+  }
+
+  .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: clamp(12.5px, 0.9vw, 13.5px);
+  }
+
+  .preview-table thead th {
+    text-align: left;
+    padding: 0 14px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray-400);
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .preview-table tbody tr {
+    transition: background 0.1s;
+  }
+
+  .preview-table tbody tr:hover td {
+    background: var(--gray-50);
+  }
+
+  .preview-table td {
+    padding: 11px 14px;
+    color: var(--gray-800);
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .preview-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .profile-muted {
+    font-size: 14px;
+    color: var(--gray-400);
+    font-style: italic;
+  }
+
+  @media (max-width: 1366px) {
+    .profile-shell {
+      grid-template-columns: clamp(240px, 28vw, 300px) minmax(0, 1fr);
+    }
+
+    .profile-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 980px) {
+    .profile-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .profile-hero-card {
+      position: static;
+      max-height: none;
+      overflow-y: visible;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 820px) {
+    .profile-grid,
+    .stats-grid,
+    .profile-hero-actions--split,
+    .profile-edit-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-height: 820px) and (min-width: 981px) {
+    .profile-hero-card {
+      position: static;
+      max-height: none;
+      overflow-y: visible;
+    }
+  }
+
+  @media (min-aspect-ratio: 21/9) {
+    .profile-shell {
+      max-width: min(1720px, calc(100vw - 120px));
+      grid-template-columns: clamp(280px, 20vw, 380px) minmax(0, 1fr);
+    }
+  }
+</style>
+
+<section class="profile-page">
+  <div class="profile-shell">
+
+    <!-- Sidebar -->
+    <aside class="profile-hero-card">
+      <div class="hero-banner"></div>
+      <div class="hero-body">
+        <div class="profile-avatar-large">
+          {% if current_user_avatar_url %}
+            <img src="{{ current_user_avatar_url }}" alt="Profile picture">
+          {% else %}
+            {{ current_user_initials }}
+          {% endif %}
+        </div>
+        <h1>{{ current_user.username if current_user else 'User' }}</h1>
+        <p class="profile-hero-meta">{{ current_user.email if current_user else '' }}</p>
+
+        <div class="profile-hero-actions--split" style="margin-top: 20px;">
+          <a class="profile-action-link secondary" href="{{ url_for('logout') }}">Logout</a>
+          <button class="profile-action-link primary profile-edit-toggle" type="button" data-profile-edit-toggle>
+            Edit Profile
+          </button>
+        </div>
+
+        <form method="post" action="{{ url_for('delete_account') }}" style="width: min(100%, 260px); margin: 8px auto 0;">
+          <button class="profile-action-link danger" type="submit" data-delete-account-btn>
+            Delete Account
+          </button>
+        </form>
+
+        <div class="profile-edit-panel" id="profile-edit-panel" hidden>
+          <form class="profile-edit-form" method="post" enctype="multipart/form-data">
+            <div class="profile-edit-block">
+              <label for="profile_pic">Profile picture</label>
+              <input id="profile_pic" name="profile_pic" type="file" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp">
+              <p class="profile-help-text">Upload a new picture to replace the current one.</p>
+            </div>
+            <div class="profile-edit-block">
+              <label for="username">Username</label>
+              <input id="username" name="username" type="text" value="{{ current_user.username if current_user else '' }}" maxlength="150" minlength="3" required>
+            </div>
+            <div class="profile-edit-block">
+              <label for="first_name">First Name</label>
+              <input id="first_name" name="first_name" type="text" value="{{ current_user.first_name if current_user else '' }}" maxlength="100">
+            </div>
+            <div class="profile-edit-block">
+              <label for="last_name">Last Name</label>
+              <input id="last_name" name="last_name" type="text" value="{{ current_user.last_name if current_user else '' }}" maxlength="100">
+            </div>
+            <div class="profile-edit-block">
+              <label for="date_of_birth">Date of Birth</label>
+              <input id="date_of_birth" name="date_of_birth" type="date" value="{{ current_user.date_of_birth if current_user else '' }}">
+            </div>
+            <div class="profile-edit-block">
+              <label for="phone_number">Phone Number</label>
+              <input id="phone_number" name="phone_number" type="text" value="{{ current_user.phone_number if current_user else '' }}" maxlength="20">
+            </div>
+            <div class="profile-edit-actions">
+              <button class="profile-save-button" type="submit">Save Changes</button>
+              <button class="profile-cancel-button" type="button" data-profile-edit-cancel>Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="profile-stack">
+
+      <section class="profile-section-card">
+        <h2>Account Details</h2>
+        <div class="profile-grid">
+          <div class="profile-card">
+            <p class="profile-card-label">Username</p>
+            <p class="profile-card-value">{{ current_user.username if current_user else '-' }}</p>
+          </div>
+          <div class="profile-card">
+            <p class="profile-card-label">Email</p>
+            <p class="profile-card-value">{{ current_user.email if current_user else '-' }}</p>
+          </div>
+          <div class="profile-card">
+            <p class="profile-card-label">First Name</p>
+            <p class="profile-card-value">{{ current_user.first_name if (current_user and current_user.first_name) else '-' }}</p>
+          </div>
+          <div class="profile-card">
+            <p class="profile-card-label">Last Name</p>
+            <p class="profile-card-value">{{ current_user.last_name if (current_user and current_user.last_name) else '-' }}</p>
+          </div>
+          <div class="profile-card">
+            <p class="profile-card-label">Date of Birth</p>
+            <p class="profile-card-value">{{ current_user.date_of_birth if (current_user and current_user.date_of_birth) else '-' }}</p>
+          </div>
+          <div class="profile-card">
+            <p class="profile-card-label">Phone Number</p>
+            <p class="profile-card-value">{{ current_user.phone_number if (current_user and current_user.phone_number) else '-' }}</p>
+          </div>
+          <div class="profile-card">
+            <p class="profile-card-label">Member Since</p>
+            <p class="profile-card-value">{{ current_user.created_at[:10] if (current_user and current_user.created_at) else '-' }}</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-section-card">
+        <h2>Profile Snapshot</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <p class="stat-label">Modules</p>
+            <p class="stat-value">{{ summary.modules_count }}</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Study Apps</p>
+            <p class="stat-value">{{ summary.study_apps_count }}</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Time Blocks</p>
+            <p class="stat-value">{{ summary.occupied_times_count }}</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Uploads</p>
+            <p class="stat-value">{{ summary.uploaded_files_count }}</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-section-card">
+        <h2>Study Preferences</h2>
+        {% if preferences %}
+          <div class="profile-grid">
+            <div class="profile-card">
+              <p class="profile-card-label">Semester Start</p>
+              <p class="profile-card-value">{{ preferences.semester_start_date }}</p>
+            </div>
+            <div class="profile-card">
+              <p class="profile-card-label">Semester End</p>
+              <p class="profile-card-value">{{ preferences.semester_end_date or '-' }}</p>
+            </div>
+            <div class="profile-card">
+              <p class="profile-card-label">Preferred Study Time</p>
+              <p class="profile-card-value">{{ preferences.preferred_study_time }}</p>
+            </div>
+            <div class="profile-card">
+              <p class="profile-card-label">Study Intensity</p>
+              <p class="profile-card-value">{{ preferences.study_intensity }}</p>
+            </div>
+            <div class="profile-card">
+              <p class="profile-card-label">Session Length</p>
+              <p class="profile-card-value">{{ preferences.session_length }} min</p>
+            </div>
+            <div class="profile-card">
+              <p class="profile-card-label">Break Preference</p>
+              <p class="profile-card-value">{{ preferences.break_preference }}</p>
+            </div>
+          </div>
+        {% else %}
+          <p class="profile-muted">No preferences have been saved yet.</p>
+        {% endif %}
+      </section>
+
+      <section class="profile-section-card">
+        <h2>Modules</h2>
+        {% if modules %}
+          <div class="table-wrap">
+            <table class="preview-table">
+              <thead>
+                <tr><th>Code</th><th>Name</th><th>Created At</th></tr>
+              </thead>
+              <tbody>
+                {% for module in modules %}
+                <tr>
+                  <td>{{ module.module_code }}</td>
+                  <td>{{ module.module_name }}</td>
+                  <td>{{ module.created_at }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="profile-muted">No modules stored yet.</p>
+        {% endif %}
+      </section>
+
+      <section class="profile-section-card">
+        <h2>Study Applications</h2>
+        {% if study_apps %}
+          <div class="table-wrap">
+            <table class="preview-table">
+              <thead>
+                <tr><th>Name</th><th>Type</th><th>Identifier</th><th>Purpose</th></tr>
+              </thead>
+              <tbody>
+                {% for app in study_apps %}
+                <tr>
+                  <td>{{ app.name }}</td>
+                  <td>{{ app.type }}</td>
+                  <td>{{ app.identifier }}</td>
+                  <td>{{ app.purpose or '-' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="profile-muted">No study applications configured yet.</p>
+        {% endif %}
+      </section>
+
+      <section class="profile-section-card">
+        <h2>Occupied Time Blocks</h2>
+        {% if occupied_times %}
+          <div class="table-wrap">
+            <table class="preview-table">
+              <thead>
+                <tr><th>Title</th><th>Category</th><th>Day</th><th>Time</th></tr>
+              </thead>
+              <tbody>
+                {% for item in occupied_times %}
+                <tr>
+                  <td>{{ item.title }}</td>
+                  <td>{{ item.category }}</td>
+                  <td>{{ item.day_of_week }}</td>
+                  <td>{{ item.start_time }} – {{ item.end_time }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="profile-muted">No occupied time blocks recorded yet.</p>
+        {% endif %}
+      </section>
+
+      <section class="profile-section-card">
+        <h2>Uploaded Files</h2>
+        {% if uploaded_files %}
+          <div class="table-wrap">
+            <table class="preview-table">
+              <thead>
+                <tr><th>Role</th><th>Original Filename</th><th>Stored Filename</th><th>Uploaded At</th></tr>
+              </thead>
+              <tbody>
+                {% for file in uploaded_files %}
+                <tr>
+                  <td>{{ file.file_role }}</td>
+                  <td>{{ file.original_filename }}</td>
+                  <td>{{ file.stored_filename }}</td>
+                  <td>{{ file.uploaded_at }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="profile-muted">No uploads found yet.</p>
+        {% endif %}
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggle = document.querySelector("[data-profile-edit-toggle]");
+    const cancel = document.querySelector("[data-profile-edit-cancel]");
+    const panel = document.getElementById("profile-edit-panel");
+    const deleteAccountBtn = document.querySelector("[data-delete-account-btn]");
+
+    const setOpen = function (isOpen) {
+      panel.hidden = !isOpen;
+      toggle.textContent = isOpen ? "Cancel" : "Edit Profile";
+      if (isOpen) {
+        const usernameField = document.getElementById("username");
+        if (usernameField) { usernameField.focus(); usernameField.select(); }
+      }
+    };
+
+    if (toggle && panel) {
+      toggle.addEventListener("click", function () { setOpen(panel.hidden); });
+    }
+    if (cancel && panel) {
+      cancel.addEventListener("click", function () { setOpen(false); });
+    }
+
+    if (deleteAccountBtn) {
+      deleteAccountBtn.addEventListener("click", function (event) {
+        const confirmed = window.confirm(
+          "Delete your account permanently? This will remove your profile, uploads, plans, summaries, and all related data."
+        );
+        if (!confirmed) {
+          event.preventDefault();
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

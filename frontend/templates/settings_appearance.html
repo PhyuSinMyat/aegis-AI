@@ -1,0 +1,668 @@
+{% extends "base.html" %}
+{% block title %}Appearance Settings | Aegis{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --primary: #5B4FE8;
+    --primary-dark: #3C34B0;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #24243B;
+  }
+
+  .settings-page {
+    font-family: 'Inter', sans-serif;
+    background: var(--gray-50);
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  .settings-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .settings-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    color: var(--gray-500);
+  }
+
+  .settings-breadcrumb a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  .settings-breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .settings-content {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    padding: 32px;
+  }
+
+  .section-header {
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--gray-100);
+  }
+
+  .section-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 6px;
+  }
+
+  .section-header p {
+    font-size: 0.95rem;
+    color: var(--gray-500);
+  }
+
+  .form-section {
+    margin-bottom: 40px;
+  }
+
+  .form-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 18px;
+  }
+
+  .setting-item {
+    padding: 20px;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+
+  .setting-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .setting-info h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 4px;
+  }
+
+  .setting-info p {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    margin: 0;
+  }
+
+  /* Theme Cards */
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 12px;
+  }
+
+  .theme-card {
+    border: 2px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .theme-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+  }
+
+  .theme-card.active {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.05);
+  }
+
+  .theme-preview {
+    width: 100%;
+    height: 60px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .theme-preview-section {
+    flex: 1;
+  }
+
+  .theme-card h5 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0;
+  }
+
+  /* Font Size Slider */
+  .font-size-control {
+    margin-top: 12px;
+  }
+
+  .font-size-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .font-size-label {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+  }
+
+  .font-size-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 4px 12px;
+    background: rgba(79, 70, 229, 0.1);
+    border-radius: 6px;
+  }
+
+  .slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--gray-200);
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+  }
+
+  .slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    border: none;
+  }
+
+  /* Toggle Switch */
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--gray-300);
+    transition: 0.3s;
+    border-radius: 26px;
+  }
+
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+  }
+
+  input:checked + .toggle-slider {
+    background-color: var(--primary);
+  }
+
+  input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+  }
+
+
+  .btn {
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+  }
+
+  .btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-secondary:hover {
+    background: var(--gray-200);
+    color: var(--gray-900);
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .appearance-popup-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(4px);
+    z-index: 10050;
+  }
+
+  .appearance-popup-overlay.active {
+    display: flex;
+  }
+
+  .appearance-popup {
+    width: min(420px, 100%);
+    background: #ffffff;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+    text-align: center;
+  }
+
+  .appearance-popup-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(79, 70, 229, 0.12);
+    color: var(--primary);
+    font-size: 1.6rem;
+  }
+
+  .appearance-popup h3 {
+    margin: 0 0 8px;
+    color: var(--gray-900);
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .appearance-popup p {
+    margin: 0 0 22px;
+    color: var(--gray-500);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .appearance-popup .btn {
+    width: 100%;
+  }
+
+  [data-theme="dark"] .settings-page {
+    background: #0f172a;
+    color: #f9fafb;
+  }
+
+  [data-theme="dark"] .settings-content,
+  [data-theme="dark"] .setting-item {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  [data-theme="dark"] .section-header {
+    border-bottom-color: #334155;
+  }
+
+  [data-theme="dark"] .section-header h1,
+  [data-theme="dark"] .form-section-title,
+  [data-theme="dark"] .setting-info h4,
+  [data-theme="dark"] .theme-card h5 {
+    color: #f8fafc;
+  }
+
+  [data-theme="dark"] .section-header p,
+  [data-theme="dark"] .setting-info p,
+  [data-theme="dark"] .settings-breadcrumb,
+  [data-theme="dark"] .font-size-label {
+    color: #cbd5e1;
+  }
+
+  [data-theme="dark"] .settings-breadcrumb a {
+    color: #a5b4fc;
+  }
+
+  [data-theme="dark"] .theme-card {
+    background: #0f172a;
+    border-color: #334155;
+  }
+
+  [data-theme="dark"] .theme-card:hover,
+  [data-theme="dark"] .theme-card.active {
+    border-color: #7c6fe8;
+    background: rgba(98, 84, 216, 0.16);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  [data-theme="dark"] .font-size-value {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+  }
+
+  [data-theme="dark"] .slider {
+    background: #475569;
+  }
+
+  [data-theme="dark"] .btn-group {
+    border-top-color: #334155;
+  }
+
+  [data-theme="dark"] .btn-secondary {
+    background: #334155;
+    color: #f8fafc;
+  }
+
+  [data-theme="dark"] .btn-secondary:hover {
+    background: #475569;
+    color: #ffffff;
+  }
+
+  [data-theme="dark"] .appearance-popup {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+  }
+
+  [data-theme="dark"] .appearance-popup h3 {
+    color: #f8fafc;
+  }
+
+  [data-theme="dark"] .appearance-popup p {
+    color: #cbd5e1;
+  }
+
+  [data-theme="dark"] .appearance-popup-icon {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+  }
+
+  @media (max-width: 640px) {
+    .settings-page {
+      padding: 20px 16px;
+    }
+
+    .settings-content {
+      padding: 24px 20px;
+    }
+
+    .theme-grid {
+      grid-template-columns: 1fr;
+    }
+
+
+    .btn-group {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<div class="settings-page">
+  <div class="settings-wrapper">
+    <div class="settings-breadcrumb">
+      <a href="{{ url_for('settings') }}"><i class="fa-solid fa-arrow-left"></i> Back to Settings</a>
+    </div>
+
+    <div class="settings-content">
+      <div class="section-header">
+        <h1>Appearance</h1>
+        <p>Customize the look and feel of Aegis</p>
+      </div>
+
+      <!-- Theme Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">Theme</h3>
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Color Theme</h4>
+            <p>Choose your preferred color scheme</p>
+          </div>
+          <div class="theme-grid">
+            <div class="theme-card active" data-theme="light">
+              <div class="theme-preview" style="background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);"></div>
+              <h5>Light</h5>
+            </div>
+            <div class="theme-card" data-theme="dark">
+              <div class="theme-preview" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%);"></div>
+              <h5>Dark</h5>
+            </div>
+            <div class="theme-card" data-theme="auto">
+              <div class="theme-preview">
+                <div class="theme-preview-section" style="background: #f9fafb;"></div>
+                <div class="theme-preview-section" style="background: #1f2937;"></div>
+              </div>
+              <h5>Auto</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Font Size Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">Font Size</h3>
+        <div class="setting-item">
+          <div class="setting-info">
+            <h4>Base Font Size</h4>
+            <p>Adjust the size of text throughout the app</p>
+          </div>
+          <div class="font-size-control">
+            <div class="font-size-display">
+              <span class="font-size-label">Small</span>
+              <span class="font-size-value" id="fontSizeValue">16px (Default)</span>
+              <span class="font-size-label">Large</span>
+            </div>
+            <input type="range" min="14" max="20" value="16" class="slider" id="fontSizeSlider">
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Buttons -->
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary" id="saveBtn">Save Changes</button>
+        <a href="{{ url_for('settings') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="appearance-popup-overlay" id="appearanceSavedPopup" role="dialog" aria-modal="true" aria-labelledby="appearanceSavedTitle">
+  <div class="appearance-popup">
+    <div class="appearance-popup-icon">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <h3 id="appearanceSavedTitle">Appearance Saved</h3>
+    <p>Your theme and font size changes have been applied.</p>
+    <button type="button" class="btn btn-primary" id="appearanceSavedOk">OK</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Load saved preferences from localStorage
+  const savedTheme = localStorage.getItem('aegis_theme') || 'light';
+  const savedFontSize = localStorage.getItem('aegis_font_size') || '16';
+  let previewTheme = savedTheme;
+  let previewFontSize = savedFontSize;
+  let settingsSaved = false;
+
+  // Apply saved preferences
+  document.querySelectorAll('.theme-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.theme === savedTheme);
+  });
+
+  const fontSizeSlider = document.getElementById('fontSizeSlider');
+  const fontSizeValue = document.getElementById('fontSizeValue');
+  const savedPopup = document.getElementById('appearanceSavedPopup');
+  const savedPopupOk = document.getElementById('appearanceSavedOk');
+  fontSizeSlider.value = savedFontSize;
+  updateFontSizeDisplay(savedFontSize);
+
+  // Theme selection
+  document.querySelectorAll('.theme-card').forEach(card => {
+    card.addEventListener('click', function() {
+      document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      previewTheme = this.dataset.theme;
+      applyAppearanceSettings(previewTheme, previewFontSize);
+    });
+  });
+
+  // Font size slider
+  fontSizeSlider.addEventListener('input', function() {
+    previewFontSize = this.value;
+    updateFontSizeDisplay(this.value);
+    applyAppearanceSettings(previewTheme, previewFontSize);
+  });
+
+  function updateFontSizeDisplay(size) {
+    let label = 'Default';
+    if (size < 16) label = 'Small';
+    else if (size > 16) label = 'Large';
+    fontSizeValue.textContent = `${size}px (${label})`;
+  }
+
+  // Save button
+  document.getElementById('saveBtn').addEventListener('click', function() {
+    // Get selected values
+    const selectedTheme = document.querySelector('.theme-card.active').dataset.theme;
+    const fontSize = fontSizeSlider.value;
+
+    // Save to localStorage
+    localStorage.setItem('aegis_theme', selectedTheme);
+    localStorage.setItem('aegis_font_size', fontSize);
+    settingsSaved = true;
+
+    // Apply immediately
+    applyAppearanceSettings(selectedTheme, fontSize);
+
+    showSavedPopup();
+  });
+
+  function showSavedPopup() {
+    savedPopup.classList.add('active');
+    savedPopupOk.focus();
+  }
+
+  function hideSavedPopup() {
+    savedPopup.classList.remove('active');
+  }
+
+  savedPopupOk.addEventListener('click', hideSavedPopup);
+  savedPopup.addEventListener('click', function(event) {
+    if (event.target === savedPopup) {
+      hideSavedPopup();
+    }
+  });
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && savedPopup.classList.contains('active')) {
+      hideSavedPopup();
+    }
+  });
+
+  function applyAppearanceSettings(theme, fontSize) {
+    theme = theme || localStorage.getItem('aegis_theme') || 'light';
+    fontSize = fontSize || localStorage.getItem('aegis_font_size') || '16';
+
+    // Apply theme
+    if (theme === 'auto') {
+      // Check system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.body.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    } else {
+      document.body.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    // Apply font size to body
+    document.body.style.fontSize = fontSize + 'px';
+    document.documentElement.style.fontSize = fontSize + 'px';
+  }
+
+  // Apply settings on page load
+  applyAppearanceSettings(savedTheme, savedFontSize);
+
+  window.addEventListener('pagehide', function() {
+    if (!settingsSaved) {
+      applyAppearanceSettings(savedTheme, savedFontSize);
+    }
+  });
+
+  // Watch for system theme changes when auto mode is selected
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+    if (previewTheme === 'auto') {
+      applyAppearanceSettings(previewTheme, previewFontSize);
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1491 @@
+{% extends "base.html" %}
+{% block title %}Study Tracker | Aegis{% endblock %}
+
+{% block content %}
+<style>
+/* ── Tracker page ─────────────────────────────────────────────────────────── */
+.tracker-page { }
+
+/* Status badge */
+.tracker-badge {
+    display: none; /* Hide legacy inline badge as per user request */
+}
+
+.status-corner {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 1100;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(98,84,216,0.06);
+    pointer-events: none;
+    display: none !important;
+}
+
+.status-corner.active       { background: #16a34a; }
+.status-corner.warning      { background: #f59e0b; }
+.status-corner.incompleted  { background: #dc2626; }
+.status-corner.completed    { background: #2563eb; }
+.status-corner.not_started  { background: #475569; }
+
+/* Pulse dot */
+.pulse-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.55; transform: scale(0.8); }
+}
+
+/* Timer grid */
+.timer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+}
+.timer-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+.timer-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+.timer-value {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #24243B;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+.timer-value.warning-val    { color: #d97706; }
+.timer-value.danger-val     { color: #dc2626; }
+.timer-value.distract-val   { color: #dc2626; }
+
+/* Progress bar */
+.progress-wrap { margin: 6px 0 18px; }
+.progress-bar-bg {
+    height: 10px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: #6254D8;
+    transition: width 1s ease;
+}
+.progress-bar-fill.completed { background: linear-gradient(90deg, #34d399, #059669); }
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+/* Alert box */
+.tracker-alert {
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.tracker-alert.info-alert { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+.tracker-alert.warning-alert { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
+.tracker-alert.danger-alert  { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+.tracker-alert.warning-alert { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.tracker-alert.danger-alert  { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.tracker-alert i { margin-top: 2px; flex-shrink: 0; }
+
+
+/* Scheduled session active info */
+.session-schedule-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.83rem;
+    font-weight: 700;
+    color: #64748b;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 6px 14px;
+    margin-top: 4px;
+}
+
+/* ── Schedule widget ──────────────────────────────────────────────────────── */
+.schedule-list { display: flex; flex-direction: column; gap: 10px; }
+.schedule-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    transition: border-color 0.2s;
+}
+.schedule-item.schedule-next  { border-color: #6254D8; background: #F3F0FF; }
+.schedule-item.schedule-past  { opacity: 0.5; }
+.schedule-time {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+    min-width: 96px;
+}
+.schedule-info { flex: 1; min-width: 0; }
+.schedule-subject { font-weight: 700; color: #24243B; font-size: 0.95rem; }
+.schedule-topic   { font-size: 0.8rem; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.schedule-countdown {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #6254D8;
+    white-space: nowrap;
+    min-width: 80px;
+    text-align: right;
+}
+.schedule-status-chip {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.schedule-status-chip.running { background: #dcfce7; color: #166534; }
+.schedule-status-chip.upcoming { background: #ede9fe; color: #5b21b6; }
+
+
+/* History badges */
+.hist-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+.hist-badge.active       { background: #dcfce7; color: #166534; }
+.hist-badge.warning      { background: #fef3c7; color: #92400e; }
+.hist-badge.incompleted  { background: #fee2e2; color: #991b1b; }
+.hist-badge.completed    { background: #dbeafe; color: #1e40af; }
+.hist-badge.not_started  { background: #f3f4f6; color: #374151; }
+
+/* Spinner */
+.btn-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<section class="upload-page tracker-page">
+    <!-- ── Hero ──────────────────────────────────────────────────────────── -->
+    <div class="upload-hero">
+        <span class="eyebrow">Study Tracker Agent</span>
+        <h1>Study Session Tracker</h1>
+        <p class="hero-text">
+            Sessions start and end automatically based on your study plan schedule.
+        </p>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         UPCOMING SESSION PANEL (shown when no active session)
+    ══════════════════════════════════════════════════════════════════ -->
+    {% if not active_session %}
+    <div class="card" id="upcomingPanel" style="margin-bottom: 20px; display:none;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px; margin-bottom:16px;">
+            <div style="flex:1;">
+                <p style="font-size:0.8rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Next Session</p>
+                <h2 style="margin:0; font-size:1.1rem; font-weight:600;" id="upcomingSubject">–</h2>
+                <span class="session-schedule-info" style="margin-top:6px;">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="upcomingTimeRange">–</span>
+                </span>
+            </div>
+            <div style="text-align:right; display:flex; flex-direction:column; align-items:flex-end; justify-content:center; gap:8px;">
+                <p style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.06em; margin:0;">Starts in</p>
+                <div id="upcomingCountdownDisplay" style="font-size:1.5rem; font-weight:600; color:#6254D8; font-variant-numeric:tabular-nums; letter-spacing:-0.02em;">
+                    –
+                </div>
+            </div>
+        </div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid #f3f4f6; font-size:0.82rem; color:#64748b; font-weight:600;">
+            <i class="fa-solid fa-bolt" style="color:#6254D8; margin-right:6px;"></i>
+            Session will start automatically at the scheduled time.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         ACTIVE SESSION PANEL
+    ══════════════════════════════════════════════════════════════════ -->
+    {% if active_session and active_display %}
+
+    <div class="card" id="activePanel" style="margin-bottom: 20px;">
+
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:4px;">
+            <div>
+                <p style="font-size:0.8rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Active Session</p>
+                <h2 style="margin:0; font-size:1.1rem; font-weight:600;" id="activeModuleName">{{ active_session.module_name }}</h2>
+                <span class="session-schedule-info" id="sessionScheduleInfo">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="sessionTimeRange">Scheduled session</span>
+                </span>
+            </div>
+            <span class="tracker-badge {{ active_display.status }}" id="activeBadge">
+                {% if active_display.status == 'active' %}<span class="pulse-dot"></span>{% endif %}
+                {{ active_display.status_label }}
+            </span>
+        </div>
+
+        <!-- Alert box (disabled because popup notifications are used instead) -->
+        <div id="alertBox" class="tracker-alert" style="display:none; margin-top:14px;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="alertMsg"></span>
+        </div>
+
+        <!-- Timer grid: Studying | Inactive | Distracted | Time Left -->
+        <p style="font-size:0.78rem;color:#64748b;margin:14px 0 4px;font-weight:600;">
+            Every minute is counted as either studying, inactive, or distracted.
+        </p>
+        <div class="timer-grid">
+            <div class="timer-card" style="border-top:3px solid #6254D8;">
+                <div class="timer-label">Studying</div>
+                <div class="timer-value" id="studyTime">{{ active_display.study_time }}</div>
+            </div>
+            <div class="timer-card" style="border-top:3px solid #f59e0b;">
+                <div class="timer-label">Inactive</div>
+                <div class="timer-value
+                    {% if active_display.inactivity_seconds >= 900 %}danger-val
+                    {% elif active_display.inactivity_seconds >= 120 %}warning-val
+                    {% endif %}"
+                    id="inactivityTime">{{ active_display.inactivity_time }}</div>
+            </div>
+            <div class="timer-card" style="border-top:3px solid #ef4444;">
+                <div class="timer-label">Distracted</div>
+                <div class="timer-value {% if active_display.distraction_seconds >= 900 %}distract-val{% endif %}"
+                     id="distractionTime">{{ active_display.distraction_time }}</div>
+            </div>
+            <div class="timer-card" style="border-top:3px solid #10b981;">
+                <div class="timer-label">Time Left</div>
+                <div class="timer-value" id="timeLeftValue">–</div>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-wrap">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill {% if active_display.status == 'completed' %}completed{% endif %}"
+                     id="progressBar"
+                     style="width: {{ active_display.progress_pct }}%;"></div>
+            </div>
+            <div class="progress-label">
+                <span id="progressText">{{ active_display.study_time }} studied</span>
+                <span>{{ active_session.planned_duration_mins }} min session</span>
+            </div>
+        </div>
+
+    </div>
+
+    {% endif %}
+
+    <input type="hidden" id="activeSessionId" value="{% if active_session %}{{ active_session.session_id }}{% endif %}">
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         NOTIFICATION PERMISSION BANNER (hidden - using custom popups)
+    ══════════════════════════════════════════════════════════════════ -->
+    <div id="notifyBanner" style="display:none; margin-bottom:16px; padding:12px 16px;
+         background:#fffbeb; border:1px solid #fde68a; border-radius:14px;
+         align-items:center; gap:12px; flex-wrap:wrap;">
+        <span style="font-size:1.1rem;">🔔</span>
+        <div style="flex:1; font-size:0.85rem; color:#92400e; font-weight:600;">
+            Enable notifications to get alerts when you go inactive or are distracted.
+        </div>
+        <button onclick="requestNotifyPermission()"
+                style="padding:6px 16px; background:#f59e0b; color:white; border:none;
+                       border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer;
+                       white-space:nowrap;">
+            Enable
+        </button>
+        <button onclick="document.getElementById('notifyBanner').style.display='none'"
+                style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1rem;padding:0;">✕</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         EXTENSION SETUP BANNER (hidden at user request)
+    ══════════════════════════════════════════════════════════════════ -->
+    <div class="card" id="extensionBanner" style="display:none; margin-bottom:20px; border:1px solid #e0e7ff; background:#f5f3ff;">
+        <div style="display:flex; align-items:flex-start; gap:14px;">
+            <div style="font-size:1.6rem; line-height:1;">🧩</div>
+            <div style="flex:1;">
+                <p style="font-weight:700; font-size:0.95rem; color:#3730a3; margin:0 0 4px;">Install the Aegis Browser Extension</p>
+                <p style="font-size:0.85rem; color:#475569; margin:0 0 12px;">
+                    Detects distracting tabs (Instagram, Netflix, TikTok…) automatically during your session — no terminal needed.
+                </p>
+                <div style="font-size:0.82rem; color:#374151; line-height:1.8;">
+                    <strong>One-time setup:</strong><br>
+                    1. Open Chrome → <code>chrome://extensions</code><br>
+                    2. Enable <strong>Developer mode</strong> (top-right toggle)<br>
+                    3. Click <strong>Load unpacked</strong> → select the <code>smartedu-extension/</code> folder<br>
+                    4. Done — the extension runs silently while you study
+                </div>
+            </div>
+            <button onclick="document.getElementById('extensionBanner').style.display='none'"
+                    style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:#9ca3af;padding:0;flex-shrink:0;">✕</button>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         TODAY'S SCHEDULE (always visible)
+    ══════════════════════════════════════════════════════════════════ -->
+    <div class="card" id="scheduleCard" style="margin-bottom: 20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+            <h2 style="margin:0;">Today's Study Plan</h2>
+            <span style="font-size:0.82rem; color:#64748b;" id="scheduleDay"></span>
+        </div>
+        <div id="scheduleContent">
+            <p style="color:#9ca3af; font-size:0.9rem;">Loading schedule…</p>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         SESSION HISTORY
+    ══════════════════════════════════════════════════════════════════ -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h2 style="margin:0;">Session History</h2>
+            {% if recent_sessions %}
+            <button onclick="clearAllHistory()"
+                style="background:none;border:1px solid #e5e7eb;border-radius:10px;
+                       padding:6px 14px;font-size:0.8rem;font-weight:700;color:#9ca3af;
+                       cursor:pointer;transition:all 0.2s;"
+                onmouseover="this.style.color='#dc2626';this.style.borderColor='#fca5a5'"
+                onmouseout="this.style.color='#9ca3af';this.style.borderColor='#e5e7eb'">
+                <i class="fa-solid fa-trash-can" style="margin-right:5px;"></i>Clear All
+            </button>
+            {% endif %}
+        </div>
+        {% if recent_sessions %}
+        <div class="table-wrap">
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Module</th>
+                        <th>Study Time</th>
+                        <th>Inactivity</th>
+                        <th>Distraction</th>
+                        <th>Goal</th>
+                        <th>Outcome</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in recent_sessions %}
+                        {% set start_ts = s.actual_start or s.created_at or '' %}
+                        {% set end_ts = s.actual_end or '' %}
+                        {% set date_str = start_ts.split('T')[0] if 'T' in start_ts else (start_ts.split(' ')[0] if start_ts else '-') %}
+                        {% set start_time = (start_ts.split('T')[1][:5]) if ('T' in start_ts and start_ts.split('T')[1]) else '-' %}
+                        {% set end_time = (end_ts.split('T')[1][:5]) if ('T' in end_ts and end_ts.split('T')[1]) else '-' %}
+                        {% if start_time != '-' and end_time != '-' %}
+                            {% set time_label = start_time ~ ' – ' ~ end_time %}
+                        {% else %}
+                            {% set time_label = start_time if start_time != '-' else '-' %}
+                        {% endif %}
+                    <tr id="hist-row-{{ s.session_id }}">
+                        <td>{{ date_str }}</td>
+                        <td><span class="time-chip">{{ time_label }}</span></td>
+                        <td>{{ s.module_name }}</td>
+                        <td>{{ s.display.study_time }}</td>
+                        <td>{{ s.display.inactivity_time }}</td>
+                        <td>{{ s.display.distraction_time }}</td>
+                        <td>{{ s.planned_duration_mins }} min</td>
+                        <td>
+                            {% if s.status == 'completed' %}
+                                <span class="hist-badge completed">Completed</span>
+                            {% else %}
+                                <span class="hist-badge incompleted">Incompleted</span>
+                            {% endif %}
+                        </td>
+                        <td style="position:relative; white-space:nowrap;">
+                            {% if s.status == 'incompleted' and not s.is_replanned %}
+                            <button onclick="replanSession({{ s.session_id }}, this)" class="replan-btn" title="Replan missed session"
+                                style="background:none;border:none;cursor:pointer;color:#6254D8;padding:4px;border-radius:6px;transition:color 0.2s;margin-right:8px;"
+                                onmouseover="this.style.color='#5245b8'" onmouseout="this.style.color='#6254D8'">
+                                <i class="fa-solid fa-rotate-right" style="font-size:0.85rem;"></i> Replan
+                            </button>
+                            {% elif s.is_replanned %}
+                            <span style="color:#10b981;font-size:0.8rem;font-weight:700;margin-right:8px;" title="This session was rescheduled."><i class="fa-solid fa-check"></i> Replanned</span>
+                            {% endif %}
+                            <button onclick="deleteSession({{ s.session_id }}, this)"
+                                style="background:none;border:none;cursor:pointer;color:#9ca3af;padding:4px;border-radius:6px;transition:color 0.2s;"
+                                onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#9ca3af'"
+                                title="Delete this session">
+                                <i class="fa-solid fa-trash-can" style="font-size:0.85rem;"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color:#64748b;">No sessions recorded yet. Start your first session above.</p>
+        {% endif %}
+    </div>
+
+
+    <div class="card" style="display:none;">
+        <h2 style="margin-bottom:6px;">Desktop Tracker</h2>
+        <p style="font-size:0.85rem;color:#64748b;margin:0 0 14px;">
+            Run <code>python monitor.py &lt;token&gt;</code> to track desktop apps alongside websites.
+            Generate a token below, then paste it into the terminal command.
+            Tokens expire after 24 hours.
+        </p>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <button onclick="generateMonitorToken()"
+                    style="padding:8px 18px;background:#6254D8;color:white;border:none;
+                           border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;">
+                Generate Monitor Token
+            </button>
+            <input id="monitorTokenBox" type="text" readonly placeholder="Token will appear here…"
+                   style="flex:1;min-width:220px;padding:8px 12px;border:1px solid #e5e7eb;
+                          border-radius:8px;font-size:0.82rem;font-family:monospace;
+                          background:#f9fafb;cursor:pointer;"
+                   onclick="this.select()" title="Click to select all">
+            <button id="copyTokenBtn" onclick="copyMonitorToken()" style="display:none;
+                    padding:8px 14px;background:#10b981;color:white;border:none;
+                    border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">
+                Copy
+            </button>
+        </div>
+        <p id="tokenMsg" style="font-size:0.8rem;margin:8px 0 0;color:#16a34a;"></p>
+        <p style="font-size:0.8rem;color:#9ca3af;margin:10px 0 0;">
+            Then in a terminal:
+            <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">
+                python monitor.py &lt;your-token&gt;
+            </code>
+        </p>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         HOW IT WORKS
+    ══════════════════════════════════════════════════════════════════ -->
+    <div class="card">
+        <h2 style="margin-bottom:14px;">How the Tracker Works</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <p class="info-label">Auto-Start & Auto-End</p>
+                <p class="info-value" style="font-size:0.88rem;">Sessions start and end automatically at the times set in your study plan. No manual action needed.</p>
+            </div>
+            <div class="info-item">
+                <p class="info-label">Study Time</p>
+                <p class="info-value" style="font-size:0.88rem;">Accumulates while you are active on the page (mouse, keyboard, or scroll detected).</p>
+            </div>
+            <div class="info-item">
+                <p class="info-label">Warning Popup (2 min)</p>
+                <p class="info-value" style="font-size:0.88rem;">Inactivity and distraction episodes each trigger one warning popup at the 2 minute mark.</p>
+            </div>
+            <div class="info-item">
+                <p class="info-label">Session Result</p>
+                <p class="info-value" style="font-size:0.88rem;">When the session ends, studying at least 70% of the planned time marks it completed. Below 70% is incompleted.</p>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let sessionId            = parseInt(document.getElementById('activeSessionId').value) || null;
+let lastActivity         = Date.now();
+let lastHeartbeatTime    = Date.now();
+let heartbeatTimer       = null;
+let localTickTimer       = null;
+let scheduleCountdownInt = null;
+let autoEndTimer         = null;
+let pendingAutoStart     = null;   // prevents double-trigger at start time
+
+// Local second-by-second counters (seeded from server on page load, corrected on each heartbeat)
+let localStudySecs    = {{ (active_display.study_seconds)      | int if active_display else 0 }};
+let localInactSecs    = {{ (active_display.inactivity_seconds) | int if active_display else 0 }};
+let localDistractSecs = {{ (active_display.distraction_seconds)| int if active_display else 0 }};
+const plannedDurationMins = {{ active_session.planned_duration_mins if active_session else 0 }};
+const sessionStartIso = '{{ active_session.actual_start if active_session else "" }}';
+const sessionStartMs  = sessionStartIso ? new Date(sessionStartIso).getTime() : 0;
+
+const HEARTBEAT_MS      = 10_000;
+const ACTIVE_THRESHOLD  = 90_000;  // 90 s of no DOM interaction = inactive
+const MAX_ELAPSED_SECS  = 120;
+const LS_END_KEY        = 'tracker_scheduled_end';   // HH:MM stored in localStorage
+
+// ── Milestone thresholds (same as background.js and monitor.py) ───────────────
+const BANNER_SECS    =  1 * 60;   //  1 min — first warning banner
+const WARNING_SECS   =  2 * 60;   //  2 min — OS-style warning notification
+const ENCOURAGE_SECS =  5 * 60;   //  5 min — "Keep Studying!" notification
+
+// ── Per-episode streak state ───────────────────────────────────────────────────
+// Streaks are seeded and corrected from authoritative server values on every
+// heartbeat response.  This prevents false notifications when the desktop
+// tracker reports "study" (which resets distraction_seconds on the server).
+let inactiveStreakSecs    = 0;
+let distractStreakSecs    = 0;
+let _prevSrvInactSecs     = localInactSecs;
+let _prevSrvDistractSecs  = localDistractSecs;
+
+// Notification-fired flags — reset when a streak drops back to 0
+let inactiveBannerShown   = false;
+let inactiveWarnShown     = false;
+let inactiveEncShown      = false;
+let distractBannerShown   = false;
+let distractWarnShown     = false;
+let distractEncShown      = false;
+let completedPopupShown   = false;
+let sessionResultRequest  = null;
+
+// Streaks are episode-based and always start from 0 on page load.
+// localInactSecs / localDistractSecs are cumulative session totals (shown in
+// the UI timers) — they must NOT seed the streak counters, which track only
+// the current continuous inactive/distraction episode.
+(function _initNotifFlags() {
+    inactiveStreakSecs  = 0;
+    distractStreakSecs  = 0;
+    inactiveBannerShown = inactiveWarnShown = inactiveEncShown = false;
+    distractBannerShown = distractWarnShown = distractEncShown = false;
+})();
+
+// ── Local timer formatting (mirrors server fmt()) ─────────────────────────────
+function fmtSecs(total) {
+    const s = Math.max(0, Math.floor(total));
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    return h > 0
+        ? `${h}h ${String(m % 60).padStart(2, '0')}m ${String(s % 60).padStart(2, '0')}s`
+        : `${String(m).padStart(2, '0')}m ${String(s % 60).padStart(2, '0')}s`;
+}
+
+function getTrackerMode() {
+    const now      = Date.now();
+    const isActive = (now - lastActivity) < ACTIVE_THRESHOLD;
+    if (!isActive) return 'inactive';
+    return 'study';
+}
+
+function resetInactiveEpisode() {
+    inactiveStreakSecs  = 0;
+    inactiveBannerShown = inactiveWarnShown = inactiveEncShown = false;
+}
+
+function resetDistractionEpisode() {
+    distractStreakSecs  = 0;
+    distractBannerShown = distractWarnShown = distractEncShown = false;
+}
+
+// ── Second-by-second tick: increments exactly one counter per second ──────────
+// Only runs when the tab is VISIBLE.  When hidden (user in desktop app or other
+// browser tab) the desktop tracker / browser extension own the heartbeats and
+// the server's authoritative values are synced back in applyDisplay().
+function tickTimers() {
+    if (!sessionId)       return;
+    if (document.hidden)  return;   // defer to desktop tracker / extension
+
+    const mode = getTrackerMode();
+
+    if (mode === 'inactive') {
+        localInactSecs++;
+        inactiveStreakSecs++;
+    } else {
+        localStudySecs++;
+        resetInactiveEpisode();
+        resetDistractionEpisode();
+    }
+
+    setText('studyTime',       fmtSecs(localStudySecs));
+    setText('inactivityTime',  fmtSecs(localInactSecs));
+    setText('distractionTime', fmtSecs(localDistractSecs));
+
+    // Time Left: wall-clock countdown from session start + planned duration
+    if (sessionStartMs && plannedDurationMins > 0) {
+        const wallElapsed = Math.floor((Date.now() - sessionStartMs) / 1000);
+        const timeLeft    = Math.max(0, plannedDurationMins * 60 - wallElapsed);
+        setText('timeLeftValue', fmtSecs(timeLeft));
+        setText('progressText', fmtSecs(wallElapsed) + ' / ' + fmtSecs(plannedDurationMins * 60));
+
+        const bar = document.getElementById('progressBar');
+        if (bar) {
+            const pct = Math.min(100, Math.round((wallElapsed / (plannedDurationMins * 60)) * 100));
+            bar.style.width = pct + '%';
+        }
+
+        if (timeLeft <= 0) {
+            _doAutoEnd();
+            return;
+        }
+    }
+
+    const inEl = document.getElementById('inactivityTime');
+    if (inEl) {
+        inEl.className = 'timer-value'
+            + (localInactSecs >= 900 ? ' danger-val' : localInactSecs >= 120 ? ' warning-val' : '');
+    }
+
+    maybeShowTrackerNotification();
+}
+
+function startLocalTick() {
+    if (localTickTimer) clearInterval(localTickTimer);
+    if (sessionId) localTickTimer = setInterval(tickTimers, 1000);
+}
+function stopLocalTick() {
+    if (localTickTimer) { clearInterval(localTickTimer); localTickTimer = null; }
+}
+
+// ── Activity detection ────────────────────────────────────────────────────────
+['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt =>
+    document.addEventListener(evt, () => { lastActivity = Date.now(); }, { passive: true })
+);
+
+// ── Heartbeat ─────────────────────────────────────────────────────────────────
+// Send a heartbeat for visible tracker-page time only. Hidden tab and desktop
+// time are owned by the extension/tray so they cannot double-count here.
+function sendHeartbeatFor(wasHidden) {
+    if (!sessionId) return;
+    if (wasHidden) return; // extension/tray owns hidden-tab and desktop time
+
+    const now            = Date.now();
+    const heartbeatStart = lastHeartbeatTime;
+    const elapsedSecs    = Math.max(0, Math.min(Math.round((now - heartbeatStart) / 1000), MAX_ELAPSED_SECS));
+    lastHeartbeatTime = now;
+
+    const inactiveStart = lastActivity + ACTIVE_THRESHOLD;
+    const inactiveMs = Math.max(0, now - Math.max(heartbeatStart, inactiveStart));
+    const inactivityElapsedSecs = Math.min(elapsedSecs, Math.round(inactiveMs / 1000));
+    const studyElapsedSecs = Math.max(0, elapsedSecs - inactivityElapsedSecs);
+    const isActive = inactivityElapsedSecs === 0;
+
+    return fetch('/tracker/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            session_id:                sessionId,
+            is_active:                 isActive,
+            is_allowed:                true,
+            elapsed_secs:              elapsedSecs,
+            study_elapsed_secs:        studyElapsedSecs,
+            inactivity_elapsed_secs:   inactivityElapsedSecs,
+            distraction_elapsed_secs:  0,
+            current_app:               'Aegis Tracker',
+        }),
+    })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => { if (data?.ok) applyDisplay(data.display); })
+    .catch(() => {});
+}
+
+function sendHeartbeat() {
+    sendHeartbeatFor(document.hidden);
+}
+
+function startHeartbeat() {
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    heartbeatTimer = setInterval(sendHeartbeat, HEARTBEAT_MS);
+}
+function stopHeartbeat() {
+    if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+}
+
+// Fetch current display state from server without counting any elapsed time.
+// Used to immediately sync distraction/inactivity after returning to the tab.
+async function syncDisplayFromServer() {
+    try {
+        const res = await fetch('/tracker/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id:   sessionId,
+                is_active:    true,
+                is_allowed:   true,
+                elapsed_secs: 0,
+                current_app:  'Aegis Tracker',
+            }),
+        });
+        const data = res.ok ? await res.json() : null;
+        if (data?.ok) applyDisplay(data.display);
+    } catch {}
+}
+
+// On visibility change, close out the visible time window before the extension
+// or tray takes ownership.
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        // Hidden time is tracked by the extension/tray. Start a fresh visible
+        // window so the page never counts hidden time as distraction.
+        lastHeartbeatTime = Date.now();
+        lastActivity = Date.now();
+        // Bug fix 3: sync distraction/inactivity values from server immediately
+        // on tab return instead of waiting up to 30s for the next heartbeat.
+        if (sessionId) syncDisplayFromServer();
+    } else {
+        // Tab just became hidden: close out the visible time window only.
+        sendHeartbeatFor(false);
+    }
+});
+
+if (sessionId) { startHeartbeat(); startLocalTick(); }
+
+// Set initial Time Left from wall-clock elapsed
+if (sessionId && sessionStartMs && plannedDurationMins > 0) {
+    const initElapsed = Math.floor((Date.now() - sessionStartMs) / 1000);
+    const initLeft    = Math.max(0, plannedDurationMins * 60 - initElapsed);
+    setText('timeLeftValue', fmtSecs(initLeft));
+}
+
+// ── Apply display update from heartbeat ───────────────────────────────────────
+function applyDisplay(d) {
+    if (!d) return;
+
+    // Sync local tick counters from authoritative server values.
+    // These are cumulative across both the browser extension AND the desktop
+    // tracker — the server is the single source of truth.
+    if (typeof d.study_seconds === 'number') {
+        const srvDistract = d.distraction_seconds;
+        const srvInact    = d.inactivity_seconds;
+
+        // Safety: if the server's cumulative value drops it means a new session
+        // started — reset the episode so stale streaks don't block notifications.
+        if (srvDistract < _prevSrvDistractSecs - 5) resetDistractionEpisode();
+        if (srvInact    < _prevSrvInactSecs    - 5) resetInactiveEpisode();
+
+        // NOTE: streak counters (inactiveStreakSecs / distractStreakSecs) are
+        // intentionally NOT synced from the server here.  The server stores
+        // cumulative session totals; the streaks are episode-based and managed
+        // purely by tickTimers() + resetXxxEpisode().  Syncing would inflate the
+        // streak with time from previous episodes and fire notifications too early.
+
+        _prevSrvDistractSecs = srvDistract;
+        _prevSrvInactSecs    = srvInact;
+
+        // Only the cumulative UI timers are synced from the server.
+        localStudySecs    = d.study_seconds;
+        localInactSecs    = srvInact;
+        localDistractSecs = srvDistract;
+        setText('studyTime',       fmtSecs(localStudySecs));
+        setText('inactivityTime',  fmtSecs(localInactSecs));
+        setText('distractionTime', fmtSecs(localDistractSecs));
+    }
+
+    // Sync Time Left from server
+    if (typeof d.time_left_seconds === 'number') {
+        setText('timeLeftValue', fmtSecs(d.time_left_seconds));
+    }
+
+    // Hide status badges - only show notifications
+    const badge = document.getElementById('activeBadge');
+    if (badge) {
+        badge.style.display = 'none';
+    }
+
+    const upcomingBadge = document.getElementById('upcomingBadge');
+    if (upcomingBadge) {
+        upcomingBadge.style.display = 'none';
+    }
+
+    // Timer colours
+    const inEl = document.getElementById('inactivityTime');
+    if (inEl) {
+        inEl.className = 'timer-value'
+            + (d.inactivity_seconds >= 900 ? ' danger-val' : d.inactivity_seconds >= 120 ? ' warning-val' : '');
+    }
+    const distEl = document.getElementById('distractionTime');
+    if (distEl) {
+        distEl.className = 'timer-value' + (d.distraction_seconds >= 900 ? ' distract-val' : '');
+    }
+
+    // Progress bar — wall-clock elapsed / planned
+    const bar = document.getElementById('progressBar');
+    if (bar) {
+        const pct = (typeof d.elapsed_seconds === 'number' && d.planned_seconds > 0)
+            ? Math.min(100, Math.round((d.elapsed_seconds / d.planned_seconds) * 100))
+            : d.progress_pct;
+        bar.style.width = pct + '%';
+        bar.className = 'progress-bar-fill' + (d.status === 'completed' ? ' completed' : '');
+    }
+    if (typeof d.elapsed_seconds === 'number' && d.planned_seconds > 0) {
+        setText('progressText', fmtSecs(d.elapsed_seconds) + ' / ' + fmtSecs(d.planned_seconds));
+    }
+
+    // Alert box is disabled: we display warnings via desktop notification popup
+    const alertBox = document.getElementById('alertBox');
+    if (alertBox) {
+        alertBox.style.display = 'none';
+    }
+
+    maybeShowTrackerNotification(d);
+
+    // Auto-reload when session is finished (completed or incompleted)
+    if (['completed', 'incompleted'].includes(d.status)) {
+        stopHeartbeat();
+        stopLocalTick();
+        clearAutoEnd();
+        localStorage.removeItem(LS_END_KEY);
+        setTimeout(() => location.reload(), 2500);
+    }
+}
+
+// ── Auto-start from schedule ──────────────────────────────────────────────────
+async function _doStart(moduleName, durationMins, endHHMM, slotStart) {
+    if (endHHMM) localStorage.setItem(LS_END_KEY, endHHMM);
+    try {
+        if (typeof window.connectAegisTray === 'function') {
+            window.connectAegisTray();
+        }
+        const res = await fetch('/tracker/start', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                module_name:          moduleName,
+                planned_duration_mins: durationMins,
+                slot_start:           slotStart || null,
+                slot_end:             endHHMM   || null,
+            }),
+        });
+        const data = await res.json();
+        if (data.ok && data.session_id) location.reload();
+    } catch {}
+}
+
+
+// ── Auto-end at scheduled end time ────────────────────────────────────────────
+function clearAutoEnd() {
+    if (autoEndTimer) { clearInterval(autoEndTimer); autoEndTimer = null; }
+}
+
+async function _doAutoEnd() {
+    if (!sessionId) return;
+    clearAutoEnd();
+    stopHeartbeat();
+    stopLocalTick();
+    localStorage.removeItem(LS_END_KEY);
+    try {
+        await sendHeartbeatFor(document.hidden);
+        const res = await fetch('/tracker/end', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId }),
+        });
+        const data = res.ok ? await res.json() : null;
+        if (data?.ok) await showSessionResultNotification(data.display);
+    } catch {}
+    setTimeout(() => location.reload(), 1200);
+}
+
+function scheduleAutoEnd(endHHMM) {
+    clearAutoEnd();
+    // Safety check — don't schedule if end time has already passed
+    const [eh, em] = endHHMM.split(':').map(Number);
+    const now0  = new Date();
+    const end0  = new Date(now0); end0.setHours(eh, em, 0, 0);
+    if (end0 - now0 <= 0) return;
+
+    autoEndTimer = setInterval(() => {
+        const now    = new Date();
+        const endMs  = new Date(now); endMs.setHours(eh, em, 0, 0);
+        const diffMs = endMs - now;
+
+        if (diffMs <= 0) {
+            _doAutoEnd();
+        } else if (!(sessionStartMs && plannedDurationMins > 0)) {
+            // Only update Time Left display when tickTimers() isn't already
+            // handling it via wall-clock countdown
+            const el = document.getElementById('timeLeftValue');
+            const totalSecs = Math.floor(diffMs / 1000);
+            if (el) el.textContent = fmtSecs(totalSecs);
+        }
+    }, 1000);
+}
+
+// Set up auto-end countdown from schedule end time
+async function initAutoEnd() {
+    if (!sessionId) return;
+
+    // Fetch schedule to get the end time of the currently-running slot
+    try {
+        const resp = await fetch('/tracker/schedule');
+        if (resp.ok) {
+            const data = await resp.json();
+            const now  = data.now || '';
+            const runningSlot = (data.sessions || []).find(
+                s => s.start <= now && s.end > now
+            ) || null;
+
+            if (runningSlot) {
+                // Update the time range label in the header
+                const rangeEl = document.getElementById('sessionTimeRange');
+                if (rangeEl) rangeEl.textContent = `${runningSlot.start} – ${runningSlot.end}`;
+                localStorage.setItem(LS_END_KEY, runningSlot.end);
+                scheduleAutoEnd(runningSlot.end);
+                return;
+            }
+        }
+    } catch {}
+
+    // Fall back to localStorage if schedule fetch failed
+    const saved = localStorage.getItem(LS_END_KEY);
+    if (saved) scheduleAutoEnd(saved);
+}
+initAutoEnd();
+
+// ── Today's schedule ──────────────────────────────────────────────────────────
+async function loadSchedule() {
+    const container = document.getElementById('scheduleContent');
+    const dayLabel  = document.getElementById('scheduleDay');
+    if (!container) return;
+
+    let data;
+    try {
+        const resp = await fetch('/tracker/schedule');
+        if (!resp.ok) { container.innerHTML = '<p style="color:#9ca3af;">Could not load schedule.</p>'; return; }
+        data = await resp.json();
+    } catch {
+        container.innerHTML = '<p style="color:#9ca3af;">Could not load schedule.</p>';
+        return;
+    }
+
+    if (dayLabel) dayLabel.textContent = data.today || '';
+
+    const sessions = data.sessions || [];
+    if (sessions.length === 0) {
+        container.innerHTML = '<p style="color:#6b7280; font-size:0.9rem;">No study sessions scheduled for today. Generate a plan on the Study Plan page to enable auto-start.</p>';
+        return;
+    }
+
+    const now    = data.now || '';
+    const nextSt = data.next_session;
+    const isRunning = !!sessionId;
+
+    // Populate upcoming session panel (only visible when no active session)
+    const upcomingPanel = document.getElementById('upcomingPanel');
+    if (upcomingPanel && !isRunning && nextSt) {
+        const dur = calcDurationMins(nextSt.start, nextSt.end);
+        setText('upcomingSubject',   nextSt.subject || '–');
+        setText('upcomingTimeRange', `${nextSt.start} – ${nextSt.end}`);
+        upcomingPanel.style.display = 'block';
+        
+        // Immediately calculate and display the countdown
+        if (nextSt.start > now) {
+            const [h, m] = nextSt.start.split(':').map(Number);
+            const nowDate = new Date();
+            const target = new Date(nowDate);
+            target.setHours(h, m, 0, 0);
+            const diffMs = target - nowDate;
+            const totalSecs = Math.floor(diffMs / 1000);
+            const hh = Math.floor(totalSecs / 3600);
+            const mm = Math.floor((totalSecs % 3600) / 60);
+            const ss = totalSecs % 60;
+            const displayLbl = hh > 0
+                ? `${hh}h ${String(mm).padStart(2,'0')}m`
+                : `${String(mm).padStart(2,'0')}m ${String(ss).padStart(2,'0')}s`;
+            const displayEl = document.getElementById('upcomingCountdownDisplay');
+            if (displayEl) displayEl.textContent = displayLbl;
+        }
+    }
+
+    let html = '<div class="schedule-list">';
+    sessions.forEach(s => {
+        const isNext    = nextSt && s.start === nextSt.start && s.subject === nextSt.subject;
+        const isPast    = s.end <= now;
+        const isNow     = s.start <= now && s.end > now;
+        const dur       = calcDurationMins(s.start, s.end);
+
+        let chipHtml = '';
+        if (isRunning && isNow) {
+            chipHtml = `<span class="schedule-status-chip running"><span class="pulse-dot" style="display:inline-block;width:7px;height:7px;margin-right:4px;"></span>Running</span>`;
+        } else if (isNext && !isRunning) {
+            chipHtml = `<div class="schedule-countdown" id="nextCountdown">–</div>`;
+        } else if (isPast) {
+            chipHtml = `<span style="font-size:0.8rem;color:#9ca3af;">Session Ended</span>`;
+        } else {
+            chipHtml = `<span class="schedule-status-chip upcoming">${escHtml(s.start)}</span>`;
+        }
+
+        html += `
+            <div class="schedule-item${isNext && !isRunning ? ' schedule-next' : ''}${isPast ? ' schedule-past' : ''}">
+                <div class="schedule-time">${escHtml(s.start)} – ${escHtml(s.end)}</div>
+                <div class="schedule-info">
+                    <div class="schedule-subject">${escHtml(s.subject)}</div>
+                </div>
+                ${chipHtml}
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+
+    if (!isRunning) {
+        // If a slot is currently in progress, start it immediately
+        const inProgress = sessions.find(s => s.start <= now && s.end > now);
+        if (inProgress && !pendingAutoStart) {
+            pendingAutoStart = { subject: inProgress.subject };
+            _doStart(inProgress.subject, calcDurationMins(inProgress.start, inProgress.end), inProgress.end, inProgress.start);
+            return;
+        }
+        // Otherwise count down to the next upcoming slot
+        if (nextSt && nextSt.start > now) {
+            startCountdown(nextSt, calcDurationMins(nextSt.start, nextSt.end));
+        }
+    }
+}
+
+function calcDurationMins(start, end) {
+    try {
+        const [sh, sm] = start.split(':').map(Number);
+        const [eh, em] = end.split(':').map(Number);
+        return Math.max(1, (eh * 60 + em) - (sh * 60 + sm));
+    } catch { return 60; }
+}
+
+function startCountdown(session, durationMins) {
+    if (scheduleCountdownInt) clearInterval(scheduleCountdownInt);
+
+    scheduleCountdownInt = setInterval(() => {
+        const now = new Date();
+        const [h, m] = session.start.split(':').map(Number);
+        const target = new Date(now);
+        target.setHours(h, m, 0, 0);
+
+        const diffMs = target - now;
+        const el     = document.getElementById('nextCountdown');
+        const displayEl = document.getElementById('upcomingCountdownDisplay');
+
+        if (diffMs <= 0) {
+            clearInterval(scheduleCountdownInt);
+            scheduleCountdownInt = null;
+            if (el) el.textContent = 'Starting…';
+            if (displayEl) displayEl.textContent = 'Starting…';
+            setText('upcomingCountdownBadge', 'Starting…');
+            // Only auto-start if no session is already running
+            if (!pendingAutoStart && !sessionId) {
+                pendingAutoStart = { subject: session.subject, durationMins };
+                _doStart(session.subject, durationMins, session.end);
+            }
+        } else {
+            const totalSecs = Math.floor(diffMs / 1000);
+            const hh      = Math.floor(totalSecs / 3600);
+            const mm      = Math.floor((totalSecs % 3600) / 60);
+            const ss      = totalSecs % 60;
+            const diffMins = totalSecs / 60;
+            const lbl = hh > 0
+                ? `in ${hh}h ${String(mm).padStart(2,'0')}m`
+                : `in ${String(mm).padStart(2,'0')}m ${String(ss).padStart(2,'0')}s`;
+            // Display format: "5h 24m" or "24m 15s"
+            const displayLbl = hh > 0
+                ? `${hh}h ${String(mm).padStart(2,'0')}m`
+                : `${String(mm).padStart(2,'0')}m ${String(ss).padStart(2,'0')}s`;
+            if (el) el.textContent = lbl;
+            if (displayEl) displayEl.textContent = displayLbl;
+            setText('upcomingCountdownBadge', `Starting ${lbl}`);
+
+            // Fire browser notification at the 10-minute mark
+            if (diffMins <= 10) {
+                maybeNotify(session.subject, session.start, session.end, diffMins);
+            }
+        }
+    }, 1000);
+}
+
+// ── Clear all history ─────────────────────────────────────────────────────────
+async function clearAllHistory() {
+    if (!confirm('Clear all session history? This cannot be undone.')) return;
+    try {
+        const res = await fetch('/tracker/history/all', { method: 'DELETE' });
+        if ((await res.json()).ok) location.reload();
+    } catch {}
+}
+
+// ── Delete session history row ────────────────────────────────────────────────
+function deleteSession(id, triggerBtn) {
+    // Close any other open popup first
+    document.querySelectorAll('.del-confirm-popup').forEach(p => p.remove());
+
+    const popup = document.createElement('div');
+    popup.className = 'del-confirm-popup';
+    popup.style.cssText = [
+        'position:absolute',
+        'right:0',
+        'top:50%',
+        'transform:translateY(-50%)',
+        'z-index:999',
+        'background:#1f2937',
+        'border:1px solid #374151',
+        'border-radius:10px',
+        'padding:10px 14px',
+        'display:flex',
+        'align-items:center',
+        'gap:8px',
+        'white-space:nowrap',
+        'box-shadow:0 4px 16px rgba(0,0,0,0.45)',
+    ].join(';');
+
+    popup.innerHTML = `
+        <span style="font-size:0.78rem;color:#d1d5db;margin-right:4px;">Delete session?</span>
+        <button onclick="confirmDeleteSession(${id})"
+            style="background:#dc2626;color:#fff;border:none;cursor:pointer;padding:4px 12px;border-radius:6px;font-size:0.78rem;font-weight:600;"
+            onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">
+            Delete
+        </button>
+        <button onclick="cancelDeleteSession(${id})"
+            style="background:#374151;color:#d1d5db;border:1px solid #4b5563;cursor:pointer;padding:4px 12px;border-radius:6px;font-size:0.78rem;font-weight:600;"
+            onmouseover="this.style.background='#4b5563'" onmouseout="this.style.background='#374151'">
+            Cancel
+        </button>`;
+
+    triggerBtn.closest('td').appendChild(popup);
+
+    // Close when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', function _outside(e) {
+            if (!popup.contains(e.target) && e.target !== triggerBtn) {
+                popup.remove();
+                document.removeEventListener('click', _outside);
+            }
+        });
+    }, 0);
+}
+
+async function confirmDeleteSession(id) {
+    try {
+        const res = await fetch(`/tracker/session/${id}`, { method: 'DELETE' });
+        if ((await res.json()).ok) {
+            const row = document.getElementById(`hist-row-${id}`);
+            if (row) row.remove();
+        }
+    } catch {}
+}
+
+function cancelDeleteSession(id) {
+    const row = document.getElementById(`hist-row-${id}`);
+    if (!row) return;
+    const popup = row.querySelector('.del-confirm-popup');
+    if (popup) popup.remove();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+function escHtml(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+let _alertToken = '';
+
+function showTrackerNotification(d) {
+    const token = `${d.status}|${d.inactivity_seconds || 0}|${d.distraction_seconds || 0}|${d.warning_msg || ''}`;
+    if (token === _alertToken) return;
+    _alertToken = token;
+
+    let title = '';
+    let body = '';
+    let notifType = 'info';
+
+    // Show notifications only for warning or completed states
+    if (d.status === 'warning') {
+        notifType = 'warning';
+        if ((d.distraction_seconds || 0) >= 120) {  // 2 min for testing
+            title = '⚠️ Distraction Warning';
+            body = `You have been on a non-study website for ${d.distraction_time || 'recently'}. Please return to the allowed app to stay focused.`;
+        } else if ((d.inactivity_seconds || 0) >= 120) {  // 2 min for testing
+            title = '⚠️ Inactivity Warning';
+            body = `No activity detected for ${d.inactivity_time || 'a while'}. Move your mouse or press a key.`;
+        } else {
+            title = '⚠️ Warning';
+            body = d.warning_msg || 'Check your session status.';
+        }
+    } else if (d.status === 'completed') {
+        notifType = 'completed';
+        title = '✅ Session Completed';
+        body = `Great job! ${d.study_time || 'Work'} studied successfully.`;
+    }
+
+    if (!body) return;
+    showCustomNotification(title, body, notifType);
+}
+
+// ── Milestone notification checks ─────────────────────────────────────────────
+// Called every second (tickTimers) and on every server heartbeat (applyDisplay).
+// Uses the unified streak counters which are kept in sync with the server, so
+// notifications are correct for BOTH website and desktop-app tracking.
+function showSessionResultNotification(d) {
+    if (!['completed', 'incompleted'].includes(d?.status)) return;
+    if (sessionResultRequest) return sessionResultRequest;
+    if (completedPopupShown || !('Notification' in window) || Notification.permission !== 'granted') return;
+    sessionResultRequest = (async () => {
+        try {
+            const res = await fetch(`/tracker/session/${d.session_id}/result-notification`, { method: 'POST' });
+            if (!res.ok) return;
+            const result = await res.json();
+            completedPopupShown = true;
+            if (result.notify) showCustomNotification(result.title, result.message, 'session-result');
+        } catch {} finally { sessionResultRequest = null; }
+    })();
+    return sessionResultRequest;
+}
+
+function maybeShowTrackerNotification(d = null) {
+    if (['completed', 'incompleted'].includes(d?.status)) {
+        showSessionResultNotification(d);
+        return;
+    }
+
+    // ── Inactive milestones ────────────────────────────────────────────────────
+    if (inactiveStreakSecs >= BANNER_SECS && !inactiveBannerShown) {
+        inactiveBannerShown = true;
+        showCustomNotification(
+            '⚠️ Inactivity Warning',
+            'No activity is detected. Move your mouse or press a key to resume studying.',
+            'warning'
+        );
+    }
+    if (inactiveStreakSecs >= WARNING_SECS && !inactiveWarnShown) {
+        inactiveWarnShown = true;
+        showCustomNotification(
+            'Inactivity Warning',
+            'No activity is detected. Return to studying to reset this streak.',
+            'warning'
+        );
+    }
+    if (inactiveStreakSecs >= ENCOURAGE_SECS && !inactiveEncShown) {
+        inactiveEncShown = true;
+        showCustomNotification(
+            'Keep Studying!',
+            "Studying can feel really tough sometimes but let\u2019s stay focused for a bit more. You can do this \u2014 just don\u2019t give up halfway.",
+            'warning'
+        );
+    }
+    // ── Distraction milestones ─────────────────────────────────────────────────
+    if (distractStreakSecs >= BANNER_SECS && !distractBannerShown) {
+        distractBannerShown = true;
+        showCustomNotification(
+            '🔴 Distraction Warning',
+            'You have been away from study tools. Please return to your allowed study app.',
+            'warning'
+        );
+    }
+    if (distractStreakSecs >= WARNING_SECS && !distractWarnShown) {
+        distractWarnShown = true;
+        showCustomNotification(
+            'Distraction Warning',
+            'You have been away from the allowed study page. Return to studying to reset this streak.',
+            'warning'
+        );
+    }
+    if (distractStreakSecs >= ENCOURAGE_SECS && !distractEncShown) {
+        distractEncShown = true;
+        showCustomNotification(
+            'Keep Studying!',
+            "Studying can feel really tough sometimes but let\u2019s stay focused for a bit more. You can do this \u2014 just don\u2019t give up halfway.",
+            'warning'
+        );
+    }
+    // ── Completed ─────────────────────────────────────────────────────────────
+}
+
+function showCustomNotification(title, body, type = 'info') {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+        new Notification(title, {
+            body: body,
+            icon: '/static/favicon.ico',
+            tag: type,                              // replaces previous notification of same type (no spam)
+            requireInteraction: false,
+        });
+    } catch (err) {
+        console.warn('Aegis notification could not be shown:', err);
+    }
+}
+
+// ── Browser notification permission ──────────────────────────────────────────
+let _notifyPermission = ('Notification' in window) ? Notification.permission : 'unsupported';
+
+function _updateNotifyBanner() {
+    const banner = document.getElementById('notifyBanner');
+    if (!banner) return;
+    banner.style.display = (_notifyPermission === 'granted' || _notifyPermission === 'denied') ? 'none' : 'flex';
+}
+
+function requestNotifyPermission() {
+    if (!('Notification' in window)) return;
+    Notification.requestPermission().then(p => {
+        _notifyPermission = p;
+        _updateNotifyBanner();
+    }).catch(() => {
+        _notifyPermission = ('Notification' in window) ? Notification.permission : 'unsupported';
+        _updateNotifyBanner();
+    });
+}
+
+// Show banner on page load if permission not yet decided
+function _initNotificationPermission() {
+    _updateNotifyBanner();
+    if (_notifyPermission === 'default') {
+        requestNotifyPermission();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', _initNotificationPermission);
+_initNotificationPermission();
+
+const _notifiedSlots = new Set();   // "HH:MM" keys already notified this page load
+
+function maybeNotify(subject, start, end, diffMins) {
+    if (_notifyPermission !== 'granted') return;
+    if (_notifiedSlots.has(start)) return;
+    _notifiedSlots.add(start);
+    const label = Math.ceil(diffMins);
+    try {
+        new Notification('📚 Study Session Starting Soon', {
+            body: `${subject} starts in ${label} minute${label !== 1 ? 's' : ''} (${start} – ${end})`,
+            icon: '/static/favicon.ico',
+        });
+    } catch (err) {
+        console.warn('Aegis notification could not be shown:', err);
+    }
+}
+
+// ── Automatic Replanning Notification ────────────────────────────────────────
+{% if replan_notification %}
+(function showAutoReplanNotification() {
+    const notification = {{ replan_notification | tojson }};
+
+    // Show desktop notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+            if (notification.rescheduled) {
+                new Notification('📅 Session Automatically Rescheduled', {
+                    body: `${notification.module}: ${notification.explanation}`,
+                    icon: '/static/favicon.ico',
+                    tag: 'auto-replan',
+                    requireInteraction: false,
+                });
+            } else {
+                new Notification('ℹ️ Session Not Rescheduled', {
+                    body: `${notification.module}: ${notification.explanation}`,
+                    icon: '/static/favicon.ico',
+                    tag: 'auto-replan',
+                    requireInteraction: false,
+                });
+            }
+        } catch (err) {
+            console.warn('Auto-replan notification failed:', err);
+        }
+    }
+
+    // CRITICAL FIX: Reload the schedule to display the replanned timetable
+    // The schedule is loaded once on page load, but when replanning happens,
+    // the frontend needs to fetch the updated timetable from the database
+    setTimeout(() => {
+        loadSchedule();
+    }, 500);
+})();
+{% endif %}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+// Always load today's schedule (shown below active session panel too)
+loadSchedule();
+
+// ── Desktop Tracker token ─────────────────────────────────────────────────────
+async function generateMonitorToken() {
+    const box = document.getElementById('monitorTokenBox');
+    const btn = document.getElementById('copyTokenBtn');
+    const msg = document.getElementById('tokenMsg');
+    box.value = 'Generating…';
+    msg.textContent = '';
+    try {
+        const resp = await fetch('/tracker/monitor-token');
+        if (!resp.ok) throw new Error('Server error');
+        const data = await resp.json();
+        box.value = data.token;
+        btn.style.display = 'inline-block';
+        msg.textContent = 'Token ready — copy it and paste into your terminal command below.';
+    } catch {
+        box.value = '';
+        msg.style.color = '#dc2626';
+        msg.textContent = 'Failed to generate token. Make sure you are logged in.';
+    }
+}
+
+function copyMonitorToken() {
+    const box = document.getElementById('monitorTokenBox');
+    const msg = document.getElementById('tokenMsg');
+    if (!box.value) return;
+    navigator.clipboard.writeText(box.value).then(() => {
+        msg.style.color = '#16a34a';
+        msg.textContent = 'Copied! Now run:  python monitor.py ' + box.value.slice(0, 8) + '…';
+    }).catch(() => {
+        box.select();
+        msg.textContent = 'Press Ctrl+C to copy the selected token.';
+    });
+}
+
+// ── Session Replanning ────────────────────────────────────────────────────────
+async function replanSession(sessionId, btnNode) {
+    const originalText = btnNode.innerHTML;
+    btnNode.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    btnNode.disabled = true;
+
+    try {
+        const resp = await fetch(`/tracker/session/${sessionId}/replan`, { method: 'POST' });
+        const data = await resp.json();
+
+        if (resp.ok && data.ok) {
+            btnNode.outerHTML = '<span style="color:#10b981;font-size:0.8rem;font-weight:700;margin-right:8px;" title="This session was rescheduled."><i class="fa-solid fa-check"></i> Replanned</span>';
+            showCustomNotification('Session Replanned', data.explanation || 'Session successfully rescheduled.', 'success');
+
+            // CRITICAL FIX: Reload the schedule to display the replanned timetable
+            setTimeout(() => {
+                loadSchedule();
+            }, 500);
+        } else {
+            alert(data.error || 'Failed to replan session.');
+            btnNode.innerHTML = originalText;
+            btnNode.disabled = false;
+        }
+    } catch(err) {
+        alert('Network error while replanning.');
+        btnNode.innerHTML = originalText;
+        btnNode.disabled = false;
+    }
+}
+</script>
+
+{% endblock %}

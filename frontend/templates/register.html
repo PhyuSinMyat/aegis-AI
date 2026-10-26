@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - Aegis{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Create Your Account</h1>
+        <p class="subtitle">Join Aegis to start your learning journey</p>
+
+        <!-- Progress Indicator -->
+        <div class="registration-progress">
+            <div class="progress-step active">
+                <div class="progress-circle">1</div>
+                <span>Account</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="progress-step">
+                <div class="progress-circle">2</div>
+                <span>Profile</span>
+            </div>
+        </div>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="username">Username <span class="required-star">*</span></label>
+                {{ form.username(class="form-input", placeholder="Choose a unique username", id="username") }}
+                {% for error in form.username.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+                <p class="validation-message" id="usernameValidation"></p>
+                <p class="helper-text">3-30 characters, letters, numbers, and underscores</p>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address <span class="required-star">*</span></label>
+                {{ form.email(class="form-input", placeholder="your.email@example.com", id="email") }}
+                {% for error in form.email.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+                <p class="validation-message" id="emailValidation"></p>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password <span class="required-star">*</span></label>
+                {{ form.password(class="form-input", placeholder="Create a strong password", id="password") }}
+                {% for error in form.password.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+                <div class="password-requirements">
+                    <p class="requirements-title">Password must contain:</p>
+                    <ul class="requirements-list">
+                        <li id="req-length" class="requirement-item">
+                            <span class="req-icon">○</span>
+                            <span>At least 8 characters</span>
+                        </li>
+                        <li id="req-uppercase" class="requirement-item">
+                            <span class="req-icon">○</span>
+                            <span>One uppercase letter (A-Z)</span>
+                        </li>
+                        <li id="req-lowercase" class="requirement-item">
+                            <span class="req-icon">○</span>
+                            <span>One lowercase letter (a-z)</span>
+                        </li>
+                        <li id="req-number" class="requirement-item">
+                            <span class="req-icon">○</span>
+                            <span>One number (0-9)</span>
+                        </li>
+                        <li id="req-special" class="requirement-item">
+                            <span class="req-icon">○</span>
+                            <span>One special character (!@#$%^&*)</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="password-strength" id="passwordStrength">
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <p class="strength-text" id="strengthText">Password strength: <span id="strengthLabel">-</span></p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password <span class="required-star">*</span></label>
+                {{ form.confirm_password(class="form-input", placeholder="Re-enter your password", id="confirm_password") }}
+                {% for error in form.confirm_password.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+                <p class="match-indicator" id="matchIndicator"></p>
+            </div>
+
+            {{ form.submit(class="btn btn-primary btn-large") }}
+        </form>
+
+        <p class="switch-link">
+            Already have an account?
+            <a href="{{ url_for('login') }}">Login here</a>
+        </p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirm_password');
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthLabel = document.getElementById('strengthLabel');
+    const strengthText = document.getElementById('strengthText');
+    const matchIndicator = document.getElementById('matchIndicator');
+
+    // Requirement elements
+    const reqLength = document.getElementById('req-length');
+    const reqUppercase = document.getElementById('req-uppercase');
+    const reqLowercase = document.getElementById('req-lowercase');
+    const reqNumber = document.getElementById('req-number');
+    const reqSpecial = document.getElementById('req-special');
+
+    // Common weak passwords
+    const weakPasswords = new Set([
+        'password', 'password1', 'password123', '12345678', '123456789',
+        'qwerty', 'qwerty123', 'abc123', 'letmein', 'welcome',
+    ]);
+
+    // Update requirement status
+    function updateRequirement(element, isMet) {
+        const icon = element.querySelector('.req-icon');
+        if (isMet) {
+            element.classList.add('met');
+            element.classList.remove('unmet');
+            icon.textContent = '✓';
+        } else {
+            element.classList.add('unmet');
+            element.classList.remove('met');
+            icon.textContent = '○';
+        }
+    }
+
+    // Password strength checker
+    function checkPasswordStrength(password) {
+        if (!password) return { score: 0, label: '-', color: '#d1d5db', width: 0 };
+
+        let score = 0;
+
+        // Length
+        if (password.length >= 8) score++;
+        if (password.length >= 12) score++;
+        if (password.length >= 16) score++;
+
+        // Has lowercase
+        if (/[a-z]/.test(password)) score++;
+
+        // Has uppercase
+        if (/[A-Z]/.test(password)) score++;
+
+        // Has number
+        if (/[0-9]/.test(password)) score++;
+
+        // Has special char
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+
+        // Penalize weak passwords
+        if (weakPasswords.has(password.toLowerCase())) {
+            score = Math.max(0, score - 3);
+        }
+
+        // Penalize repeated characters
+        if (/(.)\1{2,}/.test(password)) {
+            score = Math.max(0, score - 1);
+        }
+
+        if (score <= 2) return { score, label: 'Weak', color: '#ef4444', width: 33 };
+        if (score <= 4) return { score, label: 'Medium', color: '#f59e0b', width: 66 };
+        return { score, label: 'Strong', color: '#10b981', width: 100 };
+    }
+
+    passwordInput.addEventListener('input', function() {
+        const password = this.value;
+        const strength = checkPasswordStrength(password);
+
+        // Update strength meter
+        strengthFill.style.width = strength.width + '%';
+        strengthFill.style.backgroundColor = strength.color;
+        strengthLabel.textContent = strength.label;
+        strengthLabel.style.color = strength.color;
+
+        if (password.length === 0) {
+            strengthText.style.display = 'none';
+            // Reset all requirements
+            updateRequirement(reqLength, false);
+            updateRequirement(reqUppercase, false);
+            updateRequirement(reqLowercase, false);
+            updateRequirement(reqNumber, false);
+            updateRequirement(reqSpecial, false);
+        } else {
+            strengthText.style.display = 'block';
+            // Update requirements
+            updateRequirement(reqLength, password.length >= 8);
+            updateRequirement(reqUppercase, /[A-Z]/.test(password));
+            updateRequirement(reqLowercase, /[a-z]/.test(password));
+            updateRequirement(reqNumber, /[0-9]/.test(password));
+            updateRequirement(reqSpecial, /[^A-Za-z0-9]/.test(password));
+        }
+
+        checkPasswordMatch();
+    });
+
+    function checkPasswordMatch() {
+        if (!confirmInput.value) {
+            matchIndicator.textContent = '';
+            return;
+        }
+
+        if (passwordInput.value === confirmInput.value) {
+            matchIndicator.textContent = '✓ Passwords match';
+            matchIndicator.style.color = '#10b981';
+        } else {
+            matchIndicator.textContent = '✗ Passwords do not match';
+            matchIndicator.style.color = '#ef4444';
+        }
+    }
+
+    confirmInput.addEventListener('input', checkPasswordMatch);
+
+    // Real-time username availability check
+    const usernameInput = document.getElementById('username');
+    const usernameValidation = document.getElementById('usernameValidation');
+    let usernameTimeout;
+
+    usernameInput.addEventListener('input', function() {
+        clearTimeout(usernameTimeout);
+        const username = this.value.trim();
+
+        if (username.length < 3) {
+            usernameValidation.textContent = '';
+            return;
+        }
+
+        usernameValidation.textContent = 'Checking...';
+        usernameValidation.style.color = '#6b7280';
+
+        usernameTimeout = setTimeout(() => {
+            fetch('/api/check-username', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: username })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.available) {
+                    usernameValidation.textContent = '✓ Username is available';
+                    usernameValidation.style.color = '#10b981';
+                } else {
+                    usernameValidation.textContent = '✗ ' + data.message;
+                    usernameValidation.style.color = '#ef4444';
+                }
+            })
+            .catch(error => {
+                usernameValidation.textContent = '';
+            });
+        }, 500);
+    });
+
+});
+</script>
+
+<style>
+.registration-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 24px 0 32px 0;
+    gap: 8px;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active .progress-circle {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.progress-step span {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.progress-step.active span {
+    color: #4f46e5;
+    font-weight: 600;
+}
+
+.progress-line {
+    width: 60px;
+    height: 2px;
+    background: #e5e7eb;
+    margin: 0 4px;
+    margin-bottom: 28px;
+}
+
+.validation-message {
+    font-size: 0.85rem;
+    margin: 6px 0 0 0;
+    font-weight: 500;
+    min-height: 20px;
+}
+
+.password-requirements {
+    margin-top: 12px;
+    padding: 14px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+.requirements-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 10px 0;
+}
+
+.requirements-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #6b7280;
+    transition: all 0.2s ease;
+}
+
+.req-icon {
+    font-size: 1rem;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+}
+
+.requirement-item.met {
+    color: #10b981;
+}
+
+.requirement-item.met .req-icon {
+    color: #10b981;
+}
+
+.requirement-item.unmet {
+    color: #9ca3af;
+}
+
+.requirement-item.unmet .req-icon {
+    color: #d1d5db;
+}
+
+.password-strength {
+    margin-top: 12px;
+}
+
+.strength-bar {
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.strength-fill {
+    height: 100%;
+    width: 0%;
+    transition: all 0.3s ease;
+    border-radius: 3px;
+}
+
+.strength-text {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 0;
+    display: none;
+}
+
+.match-indicator {
+    font-size: 0.85rem;
+    margin: 8px 0 0 0;
+    font-weight: 500;
+}
+
+.btn-large {
+    padding: 14px 24px;
+    font-size: 1rem;
+    margin-top: 8px;
+}
+</style>
+{% endblock %}

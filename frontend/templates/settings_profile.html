@@ -1,0 +1,767 @@
+{% extends "base.html" %}
+{% block title %}Profile & Account | Aegis{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --primary: #5B4FE8;
+    --primary-dark: #3C34B0;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #24243B;
+    --red-500: #ef4444;
+    --red-600: #dc2626;
+  }
+
+  .settings-page {
+    font-family: 'Inter', sans-serif;
+    background: var(--gray-50);
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  .settings-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .settings-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    color: var(--gray-500);
+  }
+
+  .settings-breadcrumb a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  .settings-breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  /* Profile Header Card */
+  .profile-header-card {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 16px;
+    padding: 40px 32px;
+    margin-bottom: 24px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-header-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
+
+  .profile-avatar-large {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .profile-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .profile-header-info {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+  }
+
+  .profile-header-info h1 {
+    font-size: 1.85rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .profile-header-info p {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 18px;
+  }
+
+  .profile-quick-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-white {
+    background: #fff;
+    color: var(--primary);
+  }
+
+  .btn-white:hover {
+    background: #f3f4f6;
+    transform: translateY(-1px);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .btn-outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* Info Cards Grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .info-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    padding: 24px;
+  }
+
+  .info-card-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+
+  .info-card-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+
+  .info-card-empty {
+    font-size: 1rem;
+    color: var(--gray-400);
+    font-style: italic;
+  }
+
+  /* Security Actions Card */
+  .security-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .security-card h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 8px;
+  }
+
+  .security-card p {
+    font-size: 0.9rem;
+    color: var(--gray-500);
+    margin-bottom: 20px;
+  }
+
+  .security-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .security-actions-minimal {
+    display: flex;
+    gap: 12px;
+  }
+
+  .minimal-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 28px;
+    border: 2px solid;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+    border-color: #e0e7ff;
+    color: var(--primary);
+  }
+
+  .minimal-action-btn i {
+    font-size: 1.1rem;
+  }
+
+  .minimal-action-btn:hover {
+    border-color: var(--primary);
+    background: #f5f7ff;
+    transform: translateY(-1px);
+  }
+
+  .minimal-action-btn.minimal-danger {
+    border-color: #fee2e2;
+    color: var(--red-600);
+  }
+
+  .minimal-action-btn.minimal-danger:hover {
+    border-color: var(--red-500);
+    background: #fef2f2;
+    transform: translateY(-1px);
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+  }
+
+  .btn-danger {
+    background: var(--red-500);
+    color: #fff;
+  }
+
+  .btn-danger:hover {
+    background: var(--red-600);
+  }
+
+  /* Edit Mode */
+  .edit-section {
+    display: none;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .edit-section.active {
+    display: block;
+  }
+
+  .edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--gray-100);
+  }
+
+  .edit-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+  }
+
+  .form-section-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 18px;
+    margin-top: 28px;
+  }
+
+  .form-section-title:first-of-type {
+    margin-top: 0;
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="tel"],
+  .form-group input[type="date"] {
+    width: 100%;
+    padding: 11px 14px;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    color: var(--gray-800);
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+
+  .form-hint {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    margin-top: 6px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .profile-picture-upload {
+    padding: 24px;
+    background: var(--gray-50);
+    border-radius: 10px;
+    margin-bottom: 24px;
+  }
+
+  .profile-picture-upload h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 12px;
+  }
+
+  .profile-picture-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .profile-pic-preview {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    overflow: hidden;
+  }
+
+  .profile-pic-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-700);
+  }
+
+  .btn-secondary:hover {
+    background: var(--gray-200);
+    color: var(--gray-900);
+  }
+
+  @media (max-width: 768px) {
+    .settings-page {
+      padding: 20px 16px;
+    }
+
+    .profile-header-card {
+      flex-direction: column;
+      text-align: center;
+      padding: 32px 24px;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .security-actions,
+    .security-actions-minimal,
+    .profile-quick-actions,
+    .btn-group {
+      flex-direction: column;
+    }
+
+    .minimal-action-btn {
+      width: 100%;
+    }
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+
+<div class="settings-page">
+  <div class="settings-wrapper">
+    <div class="settings-breadcrumb">
+      <a href="{{ url_for('settings') }}"><i class="fa-solid fa-arrow-left"></i> Back to Settings</a>
+    </div>
+
+    <!-- Profile Header -->
+    <div class="profile-header-card">
+      <div class="profile-avatar-large">
+        {% if current_user_avatar_url %}
+          <img src="{{ current_user_avatar_url }}" alt="Profile picture">
+        {% else %}
+          {{ current_user_initials }}
+        {% endif %}
+      </div>
+      <div class="profile-header-info">
+        <h1>{{ current_user.get_full_name() if current_user else 'User' }}</h1>
+        <p>@{{ current_user.username if current_user else 'username' }} • {{ current_user.email if current_user else 'email@example.com' }}</p>
+        <div class="profile-quick-actions">
+          <button class="btn btn-white" id="editProfileBtn">
+            <i class="fa-solid fa-pen"></i> Edit Profile
+          </button>
+          <button class="btn btn-outline" id="cancelEditBtn" style="display: none;">
+            <i class="fa-solid fa-xmark"></i> Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Mode: Profile Information -->
+    <div id="viewMode">
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-card-label">Username</div>
+          <div class="info-card-value">{{ current_user.username if current_user else '-' }}</div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-label">Email</div>
+          <div class="info-card-value">{{ current_user.email if current_user else '-' }}</div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-label">First Name</div>
+          <div class="{% if current_user and current_user.first_name %}info-card-value{% else %}info-card-empty{% endif %}">
+            {{ current_user.first_name if (current_user and current_user.first_name) else 'Not set' }}
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-label">Last Name</div>
+          <div class="{% if current_user and current_user.last_name %}info-card-value{% else %}info-card-empty{% endif %}">
+            {{ current_user.last_name if (current_user and current_user.last_name) else 'Not set' }}
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-label">Date of Birth</div>
+          <div class="{% if current_user and current_user.date_of_birth %}info-card-value{% else %}info-card-empty{% endif %}">
+            {{ current_user.date_of_birth if (current_user and current_user.date_of_birth) else 'Not set' }}
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-label">Phone Number</div>
+          <div class="{% if current_user and current_user.phone_number %}info-card-value{% else %}info-card-empty{% endif %}">
+            {{ current_user.phone_number if (current_user and current_user.phone_number) else 'Not set' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Actions -->
+      <div class="security-card">
+        <h3>Account Security</h3>
+        <p>Manage your password and account security settings</p>
+        <div class="security-actions-minimal">
+          <a href="{{ url_for('forgot_password') }}" class="minimal-action-btn">
+            <i class="fa-solid fa-key"></i>
+            <span>Change Password</span>
+          </a>
+          <button class="minimal-action-btn minimal-danger" id="deleteAccountBtn">
+            <i class="fa-solid fa-trash-alt"></i>
+            <span>Delete Account</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Mode: Edit Form -->
+    <div id="editMode" class="edit-section">
+      <div class="edit-header">
+        <h2>Edit Profile</h2>
+      </div>
+
+      <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+        <!-- Profile Picture Upload -->
+        <div class="profile-picture-upload">
+          <h4>Profile Picture</h4>
+          <div class="profile-picture-actions">
+            <div class="profile-pic-preview">
+              {% if current_user_avatar_url %}
+                <img src="{{ current_user_avatar_url }}" alt="Profile picture" id="editProfilePreview">
+              {% else %}
+                <span id="editProfileInitials">{{ current_user_initials }}</span>
+              {% endif %}
+            </div>
+            <label for="profile_pic" class="btn btn-primary" style="margin: 0; cursor: pointer;">
+              <i class="fa-solid fa-upload"></i> Upload New Photo
+            </label>
+            <input type="file" id="profile_pic" name="profile_pic" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" style="display: none;">
+            <span style="font-size: 0.85rem; color: var(--gray-500);">PNG, JPG, GIF, WEBP (Max 5MB)</span>
+          </div>
+        </div>
+
+        <h3 class="form-section-title">Basic Information</h3>
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" value="{{ current_user.username if current_user else '' }}" required minlength="3" maxlength="30">
+          <p class="form-hint">Your unique identifier on Aegis</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" id="first_name" name="first_name" value="{{ current_user.first_name if current_user else '' }}" maxlength="100">
+          </div>
+
+          <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" id="last_name" name="last_name" value="{{ current_user.last_name if current_user else '' }}" maxlength="100">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="date_of_birth">Date of Birth</label>
+            <input type="date" id="date_of_birth" name="date_of_birth" value="{{ current_user.date_of_birth if current_user else '' }}">
+          </div>
+
+          <div class="form-group">
+            <label for="phone_number">Phone Number</label>
+            <input type="tel" id="phone_number" name="phone_number" value="{{ current_user.phone_number if current_user else '' }}" maxlength="20">
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-check"></i> Save Changes
+          </button>
+          <button type="button" class="btn btn-secondary" id="cancelEditBtn2">
+            <i class="fa-solid fa-xmark"></i> Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: #fff; border-radius: 16px; padding: 32px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+      <div style="width: 48px; height: 48px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">⚠️</div>
+      <h3 style="font-size: 1.5rem; font-weight: 700; color: #dc2626; margin: 0;">Delete Account</h3>
+    </div>
+
+    <div style="margin: 20px 0;">
+      <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+        <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.5;"><strong style="color: #78350f;">Warning:</strong> This action is permanent and cannot be undone!</p>
+      </div>
+
+      <form method="POST" action="{{ url_for('delete_account') }}" id="deleteAccountForm" style="display: flex; flex-direction: column; gap: 16px;" autocomplete="off">
+        <div>
+          <label style="font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; display: block;">Enter your password to confirm</label>
+          <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif;">
+        </div>
+
+        <div>
+          <label style="font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; display: block;">Type "DELETE MY ACCOUNT" to confirm</label>
+          <input type="text" id="confirmation_text" name="confirmation_text" required autocomplete="off" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif;">
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button type="button" id="cancelDelete" style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #f3f4f6; color: #6b7280; font-family: 'Inter', sans-serif;">Cancel</button>
+          <button type="submit" id="confirmDelete" disabled style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #dc2626; color: #fff; font-family: 'Inter', sans-serif;">Delete My Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const editProfileBtn = document.getElementById('editProfileBtn');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+  const cancelEditBtn2 = document.getElementById('cancelEditBtn2');
+  const viewMode = document.getElementById('viewMode');
+  const editMode = document.getElementById('editMode');
+
+  // Toggle edit mode
+  function showEditMode() {
+    viewMode.style.display = 'none';
+    editMode.classList.add('active');
+    editProfileBtn.style.display = 'none';
+    cancelEditBtn.style.display = 'inline-flex';
+  }
+
+  function showViewMode() {
+    viewMode.style.display = 'block';
+    editMode.classList.remove('active');
+    editProfileBtn.style.display = 'inline-flex';
+    cancelEditBtn.style.display = 'none';
+  }
+
+  editProfileBtn.addEventListener('click', showEditMode);
+  cancelEditBtn.addEventListener('click', showViewMode);
+  cancelEditBtn2.addEventListener('click', showViewMode);
+
+  // Profile picture preview in edit mode
+  const profilePicInput = document.getElementById('profile_pic');
+  const editProfilePreview = document.getElementById('editProfilePreview');
+  const editProfileInitials = document.getElementById('editProfileInitials');
+
+  if (profilePicInput) {
+    profilePicInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          if (editProfilePreview) {
+            editProfilePreview.src = event.target.result;
+          } else if (editProfileInitials) {
+            const container = editProfileInitials.parentElement;
+            container.innerHTML = `<img src="${event.target.result}" alt="Preview" id="editProfilePreview" style="width: 100%; height: 100%; object-fit: cover;">`;
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Delete Account Modal
+  const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+  const deleteModal = document.getElementById('deleteModal');
+  const deleteForm = document.getElementById('deleteAccountForm');
+  const passwordInput = document.getElementById('confirm_password');
+  const confirmationInput = document.getElementById('confirmation_text');
+  const confirmBtn = document.getElementById('confirmDelete');
+  const cancelBtn = document.getElementById('cancelDelete');
+
+  if (deleteAccountBtn && deleteModal) {
+    deleteAccountBtn.addEventListener('click', async function() {
+      // First confirmation: Are you sure?
+      const wantToDelete = await customConfirm(
+        'Are you sure you want to delete your account? This action is permanent and cannot be undone. All your data will be lost.',
+        'Delete Account',
+        'error'
+      );
+
+      if (wantToDelete) {
+        // Second step: Show password + confirmation modal
+        deleteModal.style.display = 'flex';
+        passwordInput.focus();
+      }
+    });
+
+    cancelBtn.addEventListener('click', function() {
+      deleteModal.style.display = 'none';
+      deleteForm.reset();
+      confirmBtn.disabled = true;
+    });
+
+    deleteModal.addEventListener('click', function(e) {
+      if (e.target === deleteModal) {
+        deleteModal.style.display = 'none';
+        deleteForm.reset();
+        confirmBtn.disabled = true;
+      }
+    });
+
+    function validateInputs() {
+      const passwordFilled = passwordInput.value.trim().length > 0;
+      const confirmationMatch = confirmationInput.value.trim().toLowerCase() === 'delete my account';
+      confirmBtn.disabled = !(passwordFilled && confirmationMatch);
+    }
+
+    passwordInput.addEventListener('input', validateInputs);
+    confirmationInput.addEventListener('input', validateInputs);
+
+    deleteForm.addEventListener('submit', function(e) {
+      // No browser confirm needed - the modal is already confirmation
+      if (confirmBtn.disabled) {
+        e.preventDefault();
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

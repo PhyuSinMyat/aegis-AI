@@ -1,0 +1,1351 @@
+{% extends "base.html" %}
+{% block title %}Weekly Reflection | Aegis{% endblock %}
+
+{% block content %}
+<style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+   REFLECTION PAGE - CLEAN DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+    .reflection-page {
+        padding: 1.25rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        background: #f8f9fc;
+        font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+        min-height: 100vh;
+    }
+
+    h1,
+    h2,
+    h3,
+    .card-title,
+    .stat-value,
+    .pattern-value {
+        font-family: 'Outfit', sans-serif;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────────────────── */
+    .reflection-header {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: transform 0.3s ease;
+    }
+
+    .reflection-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .header-left h1 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: #24243B;
+        margin: 0 0 0.25rem 0;
+        letter-spacing: -0.02em;
+    }
+
+    .header-left p {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 0;
+        font-weight: 500;
+    }
+
+    .header-right {
+        display: flex;
+        gap: 1.25rem;
+        align-items: center;
+    }
+
+    .week-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #ffffff;
+        padding: 0.5rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .week-nav-btn {
+        background: #fff;
+        border: none;
+        color: #6254D8;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .week-nav-btn:hover:not(:disabled) {
+        background: #6254D8;
+        color: #fff;
+        transform: scale(1.05);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .week-nav-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: #ffffff;
+        box-shadow: none;
+    }
+
+    .week-display {
+        padding: 0 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #24243B;
+    }
+
+    /* ── Stats Grid ──────────────────────────────────────────────────────────── */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+        border-radius: 12px;
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        transition: box-shadow 0.2s ease;
+    }
+
+    .stat-card:hover {
+        box-shadow: 0 4px 16px rgba(98, 84, 216, 0.08);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: none;
+        pointer-events: none;
+    }
+
+    /* Vibrant accents on stat cards */
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .stat-card.planned::after {
+        background: linear-gradient(90deg, #60a5fa, #3b82f6);
+    }
+
+    .stat-card.completed::after {
+        background: linear-gradient(90deg, #34d399, #10b981);
+    }
+
+    .stat-card.missed::after {
+        background: linear-gradient(90deg, #f87171, #ef4444);
+    }
+
+    .stat-card.rate::after {
+        background: linear-gradient(90deg, #a78bfa, #8b5cf6);
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #6254D8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.4rem;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #24243B;
+        margin-bottom: 0.25rem;
+        line-height: 1;
+    }
+
+    .stat-sublabel {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* ── Main Layout ─────────────────────────────────────────────────────────── */
+    .main-layout {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 1rem;
+    }
+
+    /* ── Content Card ────────────────────────────────────────────────────────── */
+    .content-card,
+    .sidebar-section {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: box-shadow 0.2s ease;
+    }
+
+    .content-card:hover,
+    .sidebar-section:hover {
+        box-shadow: 0 4px 16px rgba(98, 84, 216, 0.08);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    }
+
+    .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #24243B;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-title i {
+        color: #6254D8;
+        font-size: 1rem;
+        background: #F3F0FF;
+        padding: 0.4rem;
+        border-radius: 8px;
+    }
+
+    .card-link {
+        font-size: 0.8rem;
+        color: #6254D8;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.18s ease;
+        background: #F3F0FF;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+    }
+
+    .card-link:hover {
+        background: #6254D8;
+        color: #fff;
+    }
+
+    /* ── Daily Chart ─────────────────────────────────────────────────────────── */
+    .daily-chart {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        height: 240px;
+        gap: 1rem;
+        padding: 1rem 0;
+        margin-top: 1rem;
+    }
+
+    .chart-bar {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        position: relative;
+    }
+
+    .bar-container {
+        width: 100%;
+        max-width: 45px;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Frame showing planned hours (outline) */
+    .bar-planned {
+        width: 100%;
+        border: 2px solid #c7d2fe;
+        border-radius: 8px;
+        background: rgba(199, 210, 254, 0.1);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    /* Filled bar showing completed hours */
+    .bar-completed {
+        width: 100%;
+        background: linear-gradient(180deg, #a855f7 0%, #6254D8 100%);
+        border-radius: 6px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .chart-bar:hover .bar-completed {
+        filter: brightness(1.15);
+        box-shadow: 0 8px 20px rgba(168, 85, 247, 0.5);
+    }
+
+    .chart-bar:hover .bar-planned {
+        border-color: #a5b4fc;
+        background: rgba(199, 210, 254, 0.2);
+    }
+
+    .bar-values {
+        position: absolute;
+        top: -45px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 0.4rem 0.6rem;
+        border-radius: 8px;
+        opacity: 0;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+    }
+
+    .chart-bar:hover .bar-values {
+        opacity: 1;
+        top: -50px;
+    }
+
+    .bar-values-completed {
+        color: #6254D8;
+        font-weight: 700;
+    }
+
+    .bar-values-planned {
+        color: #64748b;
+        font-size: 0.7rem;
+    }
+
+    .bar-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    /* ── Patterns Grid ───────────────────────────────────────────────────────── */
+    .patterns-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    .pattern-card {
+        padding: 1rem;
+        background: #f8f9fc;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.18s ease;
+    }
+
+    .pattern-card:hover {
+        background: #F3F0FF;
+        border-color: #d1cdf0;
+    }
+
+    .pattern-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #6254D8;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.5rem;
+    }
+
+    .pattern-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #24243B;
+        margin-bottom: 0.25rem;
+    }
+
+    .pattern-detail {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* ── Module Progress ─────────────────────────────────────────────────────── */
+    .module-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .module-item {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .module-info {
+        flex: 1;
+    }
+
+    .module-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #24243B;
+        margin-bottom: 0.4rem;
+    }
+
+    .module-hours {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .module-progress-bar {
+        height: 8px;
+        background: rgba(226, 232, 240, 0.6);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .module-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6254D8 0%, #a855f7 100%);
+        border-radius: 4px;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Shimmer effect for progress bar */
+    .module-progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 100%);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    .module-percentage {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #6254D8 0%, #a855f7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        min-width: 65px;
+        text-align: right;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────────────────── */
+    .sidebar-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #24243B;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .sidebar-title i {
+        color: #6254D8;
+        background: #F3F0FF;
+        padding: 0.4rem;
+        border-radius: 8px;
+    }
+
+    .highlight-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: #f8f9fc;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.18s ease;
+    }
+
+    .highlight-item:hover {
+        background: #F3F0FF;
+        border-color: #d1cdf0;
+    }
+
+    .highlight-icon {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .highlight-icon i {
+        font-size: 1rem;
+    }
+
+    .highlight-icon.success i {
+        color: #10b981;
+    }
+
+    .highlight-icon.warning i {
+        color: #f59e0b;
+    }
+
+    .highlight-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .highlight-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .highlight-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #24243B;
+    }
+
+    .highlight-detail {
+        font-size: 0.85rem;
+        color: #8b5cf6;
+        font-weight: 500;
+        margin-top: 0.25rem;
+    }
+
+    /* ── Deadlines ───────────────────────────────────────────────────────────── */
+    .deadline-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .deadline-item {
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #f8f9fc;
+        transition: all 0.18s ease;
+    }
+
+    .deadline-item:hover {
+        background: #F3F0FF;
+        border-color: #d1cdf0;
+    }
+
+    .deadline-item.urgent {
+        background: rgba(254, 242, 242, 0.6);
+        border-color: rgba(254, 202, 202, 0.8);
+    }
+
+    .deadline-item.urgent:hover {
+        background: rgba(254, 242, 242, 0.9);
+    }
+
+    .deadline-item.soon {
+        background: rgba(255, 251, 235, 0.6);
+        border-color: rgba(253, 230, 138, 0.8);
+    }
+
+    .deadline-item.soon:hover {
+        background: rgba(255, 251, 235, 0.9);
+    }
+
+    .deadline-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .deadline-days {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #24243B;
+    }
+
+    .deadline-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .deadline-item.urgent .deadline-badge {
+        background: #ef4444;
+        color: #fff;
+    }
+
+    .deadline-item.soon .deadline-badge {
+        background: #f59e0b;
+        color: #fff;
+    }
+
+    .deadline-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #24243B;
+        margin-bottom: 0.5rem;
+    }
+
+    .deadline-module {
+        font-size: 0.85rem;
+        color: #8b5cf6;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .deadline-module i {
+        font-size: 0.8rem;
+    }
+
+    .deadline-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 500;
+        flex-wrap: wrap;
+    }
+
+    .deadline-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .deadline-meta i {
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
+
+    .deadline-weight {
+        color: #6254D8;
+        font-weight: 600;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────────────────── */
+    @media (max-width: 1200px) {
+        .main-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .reflection-page {
+            padding: 1rem;
+        }
+
+        .reflection-header {
+            flex-direction: column;
+            gap: 1.5rem;
+            text-align: center;
+        }
+
+        .header-right {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .week-nav {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .patterns-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .daily-chart {
+            height: 180px;
+        }
+    }
+</style>
+
+<section class="reflection-page">
+    <!-- Header -->
+    <div class="reflection-header">
+        <div class="header-left">
+            <h1>Weekly Reflection</h1>
+            <p>Analyze your study patterns and performance</p>
+        </div>
+        <div class="header-right">
+            <div class="week-nav">
+                <button class="week-nav-btn" onclick="changeWeek(-1)" title="Previous week">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span class="week-display">Week <span id="currentWeek">{{ display_week if display_week is not none else 1 }}</span></span>
+                <button class="week-nav-btn" onclick="changeWeek(1)" title="Next week">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card planned">
+            <div class="stat-label">Planned Hours</div>
+            <div class="stat-value" id="stat-planned-hours">{{ initial_stats.planned_hours if initial_stats else '0' }}h</div>
+            <div class="stat-sublabel" id="stat-planned-sessions">{{ initial_stats.sessions_scheduled if initial_stats else 0 }} sessions scheduled</div>
+        </div>
+        <div class="stat-card completed">
+            <div class="stat-label">Completed Hours</div>
+            <div class="stat-value" id="stat-completed-hours">{{ initial_stats.completed_hours if initial_stats else '0' }}h</div>
+            <div class="stat-sublabel" id="stat-completed-sessions">{{ initial_stats.sessions_done if initial_stats else 0 }} sessions done</div>
+        </div>
+        <div class="stat-card missed">
+            <div class="stat-label">Missed Sessions</div>
+            <div class="stat-value" id="stat-missed-sessions">{{ initial_stats.missed_sessions if initial_stats else 0 }}</div>
+            <div class="stat-sublabel" id="stat-missed-hours">{{ initial_stats.missed_hours if initial_stats else '0' }} hours lost</div>
+        </div>
+        <div class="stat-card rate">
+            <div class="stat-label">Completion Rate</div>
+            <div class="stat-value" id="stat-completion-rate">{{ initial_stats.completion_rate if initial_stats else 0 }}%</div>
+            <div class="stat-sublabel">{% if initial_stats and initial_stats.completion_rate >= 70 %}Above average{% elif initial_stats and initial_stats.completion_rate >= 50 %}Average{% else %}Below average{% endif %}</div>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <!-- Left Column -->
+        <div class="main-column">
+            <!-- Daily Hours Chart -->
+            <div class="content-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-chart-column"></i>
+                        Daily Study Hours
+                    </div>
+                    <div style="display: flex; gap: 1.5rem; align-items: center; font-size: 0.8rem;">
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <div style="width: 20px; height: 12px; border: 2px solid #c7d2fe; border-radius: 3px; background: rgba(199, 210, 254, 0.1);"></div>
+                            <span style="color: #64748b; font-weight: 500;">Planned</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <div style="width: 20px; height: 12px; background: linear-gradient(90deg, #a855f7 0%, #6254D8 100%); border-radius: 3px;"></div>
+                            <span style="color: #64748b; font-weight: 500;">Completed</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="daily-chart" id="daily-chart">
+                    {% if initial_daily_hours %}
+                        {% set max_hours_list = initial_daily_hours | map(attribute='planned') | list + initial_daily_hours | map(attribute='completed') | list %}
+                        {% set max_hours = max_hours_list | max %}
+                        {% set max_hours = max_hours if max_hours > 0 else 1 %}
+                        {% for day_data in initial_daily_hours %}
+                        <div class="chart-bar">
+                            <div class="bar-container">
+                                <div class="bar-planned" style="height: {{ (day_data.planned / max_hours * 200) if max_hours > 0 else 0 }}px;">
+                                    <div class="bar-completed" style="height: {{ (day_data.completed / day_data.planned * 100) if day_data.planned > 0 else 0 }}%;"></div>
+                                </div>
+                                <div class="bar-values">
+                                    <div class="bar-values-completed">{{ day_data.completed }}h completed</div>
+                                    <div class="bar-values-planned">{{ day_data.planned }}h planned</div>
+                                </div>
+                            </div>
+                            <div class="bar-label">{{ day_data.day }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
+                        <div class="chart-bar">
+                            <div class="bar-container">
+                                <div class="bar-planned" style="height: 0px;">
+                                    <div class="bar-completed" style="height: 0%;"></div>
+                                </div>
+                                <div class="bar-values">
+                                    <div class="bar-values-completed">0h completed</div>
+                                    <div class="bar-values-planned">0h planned</div>
+                                </div>
+                            </div>
+                            <div class="bar-label">{{ day }}</div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Study Patterns -->
+            <div class="content-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-brain"></i>
+                        Study Patterns
+                    </div>
+                    <a href="{{ url_for('tracker.tracker_page') }}" class="card-link">View Tracker</a>
+                </div>
+                <div class="patterns-grid" id="patterns-grid">
+                    <div class="pattern-card">
+                        <div class="pattern-label">Peak Performance</div>
+                        <div class="pattern-value">{{ initial_study_patterns.peak_performance.time_slot if initial_study_patterns else 'No data' }}</div>
+                        <div class="pattern-detail">{{ initial_study_patterns.peak_performance.completion_rate if initial_study_patterns else 0 }}% completion rate</div>
+                    </div>
+                    <div class="pattern-card">
+                        <div class="pattern-label">Average Duration</div>
+                        <div class="pattern-value">{{ initial_study_patterns.average_duration.formatted if initial_study_patterns else '0min' }}</div>
+                        <div class="pattern-detail">Target: {{ (initial_study_patterns.average_duration.target_minutes // 60) if initial_study_patterns and initial_study_patterns.average_duration.target_minutes >= 60 else 0 }}h {{ (initial_study_patterns.average_duration.target_minutes % 60) if initial_study_patterns else 0 }}min</div>
+                    </div>
+                    <div class="pattern-card">
+                        <div class="pattern-label">Most Productive</div>
+                        <div class="pattern-value">{{ initial_study_patterns.most_productive.day if initial_study_patterns else 'No data' }}</div>
+                        <div class="pattern-detail">{{ initial_study_patterns.most_productive.completed_sessions if initial_study_patterns else 0 }} sessions completed</div>
+                    </div>
+                    <div class="pattern-card">
+                        <div class="pattern-label">Struggle Period</div>
+                        <div class="pattern-value">{{ initial_study_patterns.struggle_period.time_slot if initial_study_patterns else 'No data' }}</div>
+                        <div class="pattern-detail">{{ initial_study_patterns.struggle_period.missed_sessions if initial_study_patterns else 0 }} sessions missed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module Progress -->
+            <div class="content-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-book"></i>
+                        Module Progress
+                    </div>
+                </div>
+                <div class="module-list" id="module-list">
+                    {% if initial_module_stats %}
+                        {% for module in initial_module_stats %}
+                        <div class="module-item">
+                            <div class="module-info">
+                                <div class="module-name">{{ module.module_name }}</div>
+                                <div class="module-hours">{{ module.planned_hours }}h planned • {{ module.completed_hours }}h completed</div>
+                                <div class="module-progress-bar">
+                                    <div class="module-progress-fill" style="width: {{ module.completion_rate }}%"></div>
+                                </div>
+                            </div>
+                            <div class="module-percentage">{{ module.completion_rate }}%</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="module-item">
+                            <div class="module-info">
+                                <div class="module-name">No module data available</div>
+                                <div class="module-hours">Complete a study session to see your progress</div>
+                                <div class="module-progress-bar">
+                                    <div class="module-progress-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="module-percentage">0%</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="sidebar-column">
+            <!-- Performance Highlights -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <i class="fa-solid fa-trophy"></i>
+                    Performance Highlights
+                </div>
+                <div id="performance-highlights-container">
+                    {% if initial_performance_highlights and initial_performance_highlights.all_modules and initial_performance_highlights.all_modules|length > 0 %}
+                        {% set high_performers = [] %}
+                        {% set moderate_performers = [] %}
+                        {% set low_performers = [] %}
+                        {% for module in initial_performance_highlights.all_modules %}
+                            {% if module.avg_score > 80 %}
+                                {% set _ = high_performers.append(module) %}
+                            {% elif module.avg_score >= 50 %}
+                                {% set _ = moderate_performers.append(module) %}
+                            {% else %}
+                                {% set _ = low_performers.append(module) %}
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- High Performance Section (>80%) -->
+                        {% if high_performers|length > 0 %}
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="font-size: 0.8rem; font-weight: 700; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-arrow-trend-up"></i> High Performance (&gt;80%)
+                            </div>
+                            {% for module in high_performers %}
+                            <div class="highlight-item" style="margin-bottom: 0.75rem;">
+                                <div class="highlight-icon success">
+                                    <i class="fa-solid fa-trophy"></i>
+                                </div>
+                                <div class="highlight-content" style="flex: 1;">
+                                    <div class="highlight-value" style="font-size: 0.95rem;">{{ module.module_name }}</div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem;">
+                                        <div class="highlight-detail">{{ module.quiz_count }} quiz{{ 'zes' if module.quiz_count != 1 else '' }}</div>
+                                        <div style="font-size: 1.2rem; font-weight: 700; color: #10b981;">{{ module.avg_score }}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Moderate Performance Section (50-80%) -->
+                        {% if moderate_performers|length > 0 %}
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="font-size: 0.8rem; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-chart-line"></i> Moderate Performance (50-80%)
+                            </div>
+                            {% for module in moderate_performers %}
+                            <div class="highlight-item" style="margin-bottom: 0.75rem;">
+                                <div class="highlight-icon" style="background: #fff; border: 1px solid #3b82f6;">
+                                    <i class="fa-solid fa-chart-simple" style="color: #3b82f6;"></i>
+                                </div>
+                                <div class="highlight-content" style="flex: 1;">
+                                    <div class="highlight-value" style="font-size: 0.95rem;">{{ module.module_name }}</div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem;">
+                                        <div class="highlight-detail">{{ module.quiz_count }} quiz{{ 'zes' if module.quiz_count != 1 else '' }}</div>
+                                        <div style="font-size: 1.2rem; font-weight: 700; color: #3b82f6;">{{ module.avg_score }}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Low Performance Section (<50%) -->
+                        {% if low_performers|length > 0 %}
+                        <div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: #ef4444; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Low Performance (&lt;50%)
+                            </div>
+                            {% for module in low_performers %}
+                            <div class="highlight-item" style="margin-bottom: 0.75rem;">
+                                <div class="highlight-icon warning">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                </div>
+                                <div class="highlight-content" style="flex: 1;">
+                                    <div class="highlight-value" style="font-size: 0.95rem;">{{ module.module_name }}</div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem;">
+                                        <div class="highlight-detail">{{ module.quiz_count }} quiz{{ 'zes' if module.quiz_count != 1 else '' }}</div>
+                                        <div style="font-size: 1.2rem; font-weight: 700; color: #ef4444;">{{ module.avg_score }}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="highlight-item" style="display: block; text-align: center; padding: 2rem;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.3;">📊</div>
+                            <div class="highlight-label" style="margin-bottom: 0.5rem;">No Quiz Data Yet</div>
+                            <div class="highlight-detail" style="color: #64748b; font-size: 0.8rem;">
+                                Complete some quizzes to see your performance highlights
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Upcoming Deadlines -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    Upcoming Deadlines
+                </div>
+                <div class="deadline-list" id="deadline-list">
+                    {% if upcoming_deadlines %}
+                        {% for deadline in upcoming_deadlines %}
+                        <div class="deadline-item {% if deadline.urgency == 'urgent' %}urgent{% elif deadline.urgency == 'soon' %}soon{% endif %}">
+                            <div class="deadline-header">
+                                <div class="deadline-days">{{ deadline.days_until }} day{{ 's' if deadline.days_until != 1 else '' }}</div>
+                                {% if deadline.urgency %}
+                                <div class="deadline-badge">{{ deadline.urgency | capitalize }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="deadline-title">{{ deadline.title }}</div>
+                            {% if deadline.module_name %}
+                            <div class="deadline-module">
+                                <i class="fa-solid fa-book"></i> {{ deadline.module_name }}
+                            </div>
+                            {% endif %}
+                            <div class="deadline-meta">
+                                <span><i class="fa-solid fa-calendar"></i> Week {{ deadline.week_number }}</span>
+                                {% if deadline.due_date %}
+                                <span><i class="fa-solid fa-clock"></i> {{ deadline.due_date }}</span>
+                                {% endif %}
+                                {% if deadline.weightage %}
+                                <span class="deadline-weight"><i class="fa-solid fa-chart-simple"></i> {{ deadline.weightage }}% weightage</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="deadline-item">
+                            <div class="deadline-header">
+                                <div class="deadline-days">No upcoming deadlines</div>
+                            </div>
+                            <div class="deadline-title">All caught up!</div>
+                            <div class="deadline-meta">
+                                <span>Check back later for new assessments</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<script>
+    // Week navigation - use available weeks from backend
+    const availableWeeks = {{ available_weeks | tojson }};
+    let currentWeek = availableWeeks.length > 0 ? availableWeeks[availableWeeks.length - 1] : 1;
+    const maxWeek = availableWeeks.length > 0 ? Math.max(...availableWeeks) : 1;
+    const minWeek = availableWeeks.length > 0 ? Math.min(...availableWeeks) : 1;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        updateWeekNavigationState();
+    });
+
+    function changeWeek(delta) {
+        const newWeek = currentWeek + delta;
+        if (newWeek < minWeek || newWeek > maxWeek) return;
+
+        currentWeek = newWeek;
+        document.getElementById('currentWeek').textContent = currentWeek;
+        updateWeekNavigationState();
+        loadWeekData(currentWeek);
+    }
+
+    function updateWeekNavigationState() {
+        const prevBtn = document.querySelector('.week-nav-btn:first-child');
+        const nextBtn = document.querySelector('.week-nav-btn:last-child');
+
+        prevBtn.disabled = (currentWeek <= minWeek);
+        nextBtn.disabled = (currentWeek >= maxWeek);
+    }
+
+    async function loadWeekData(weekNumber) {
+        try {
+            showLoading();
+            const response = await fetch(`/api/reflection/week/${weekNumber}`);
+            if (!response.ok) throw new Error('Failed to load data');
+            const data = await response.json();
+            updatePage(data);
+            hideLoading();
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Backend integration pending - Week navigation will work once API is connected');
+            hideLoading();
+        }
+    }
+
+    function showLoading() {
+        let overlay = document.getElementById('loadingOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;z-index:9999;';
+            overlay.innerHTML = '<div style="text-align:center;"><div style="font-size:2rem;margin-bottom:1rem;color:#6254D8;">⏳</div><div style="font-size:0.95rem;font-weight:600;color:#24243B;">Loading Week ' + currentWeek + '...</div></div>';
+            document.body.appendChild(overlay);
+        }
+        overlay.style.display = 'flex';
+    }
+
+    function hideLoading() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    function updatePage(data) {
+        console.log('Update page with:', data);
+
+        // Update stats cards
+        if (data.stats) {
+            document.getElementById('stat-planned-hours').textContent = data.stats.planned_hours + 'h';
+            document.getElementById('stat-planned-sessions').textContent = data.stats.sessions_scheduled + ' sessions scheduled';
+            document.getElementById('stat-completed-hours').textContent = data.stats.completed_hours + 'h';
+            document.getElementById('stat-completed-sessions').textContent = data.stats.sessions_done + ' sessions done';
+            document.getElementById('stat-missed-sessions').textContent = data.stats.missed_sessions;
+            document.getElementById('stat-missed-hours').textContent = data.stats.missed_hours + ' hours lost';
+            document.getElementById('stat-completion-rate').textContent = data.stats.completion_rate + '%';
+        }
+
+        // Update daily chart
+        if (data.daily_hours) {
+            const chartContainer = document.getElementById('daily-chart');
+            const allHours = data.daily_hours.flatMap(d => [d.planned, d.completed]);
+            const maxHours = Math.max(...allHours, 1);
+            chartContainer.innerHTML = data.daily_hours.map(day => {
+                const plannedHeight = (day.planned / maxHours * 200);
+                const completedPercent = day.planned > 0 ? (day.completed / day.planned * 100) : 0;
+                return `
+                    <div class="chart-bar">
+                        <div class="bar-container">
+                            <div class="bar-planned" style="height: ${plannedHeight}px;">
+                                <div class="bar-completed" style="height: ${completedPercent}%;"></div>
+                            </div>
+                            <div class="bar-values">
+                                <div class="bar-values-completed">${day.completed}h completed</div>
+                                <div class="bar-values-planned">${day.planned}h planned</div>
+                            </div>
+                        </div>
+                        <div class="bar-label">${day.day}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update study patterns
+        if (data.study_patterns) {
+            const patternsGrid = document.getElementById('patterns-grid');
+            patternsGrid.innerHTML = `
+                <div class="pattern-card">
+                    <div class="pattern-label">Peak Performance</div>
+                    <div class="pattern-value">${data.study_patterns.peak_performance.time_slot}</div>
+                    <div class="pattern-detail">${data.study_patterns.peak_performance.completion_rate}% completion rate</div>
+                </div>
+                <div class="pattern-card">
+                    <div class="pattern-label">Average Duration</div>
+                    <div class="pattern-value">${data.study_patterns.average_duration.formatted}</div>
+                    <div class="pattern-detail">Target: ${Math.floor(data.study_patterns.average_duration.target_minutes / 60)}h ${data.study_patterns.average_duration.target_minutes % 60}min</div>
+                </div>
+                <div class="pattern-card">
+                    <div class="pattern-label">Most Productive</div>
+                    <div class="pattern-value">${data.study_patterns.most_productive.day}</div>
+                    <div class="pattern-detail">${data.study_patterns.most_productive.completed_sessions} sessions completed</div>
+                </div>
+                <div class="pattern-card">
+                    <div class="pattern-label">Struggle Period</div>
+                    <div class="pattern-value">${data.study_patterns.struggle_period.time_slot}</div>
+                    <div class="pattern-detail">${data.study_patterns.struggle_period.missed_sessions} sessions missed</div>
+                </div>
+            `;
+        }
+
+        // Update module progress
+        if (data.module_stats) {
+            const moduleList = document.getElementById('module-list');
+            if (data.module_stats.length > 0) {
+                moduleList.innerHTML = data.module_stats.map(module => `
+                    <div class="module-item">
+                        <div class="module-info">
+                            <div class="module-name">${module.module_name}</div>
+                            <div class="module-hours">${module.planned_hours}h planned • ${module.completed_hours}h completed</div>
+                            <div class="module-progress-bar">
+                                <div class="module-progress-fill" style="width: ${module.completion_rate}%"></div>
+                            </div>
+                        </div>
+                        <div class="module-percentage">${module.completion_rate}%</div>
+                    </div>
+                `).join('');
+            } else {
+                moduleList.innerHTML = `
+                    <div class="module-item">
+                        <div class="module-info">
+                            <div class="module-name">No module data available</div>
+                            <div class="module-hours">Complete a study session to see your progress</div>
+                            <div class="module-progress-bar">
+                                <div class="module-progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="module-percentage">0%</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Update performance highlights
+        if (data.performance_highlights) {
+            renderPerformanceHighlights(data.performance_highlights);
+        }
+    }
+
+    function renderPerformanceHighlights(highlights) {
+        const container = document.getElementById('performance-highlights-container');
+
+        if (!highlights.all_modules || highlights.all_modules.length === 0) {
+            container.innerHTML = `
+                <div class="highlight-item" style="display: block; text-align: center; padding: 2rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.3;">📊</div>
+                    <div class="highlight-label" style="margin-bottom: 0.5rem;">No Quiz Data Yet</div>
+                    <div class="highlight-detail" style="color: #64748b; font-size: 0.8rem;">
+                        Complete some quizzes to see your performance highlights
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Categorize modules by performance
+        const highPerformers = highlights.all_modules.filter(m => m.avg_score > 80);
+        const moderatePerformers = highlights.all_modules.filter(m => m.avg_score >= 50 && m.avg_score <= 80);
+        const lowPerformers = highlights.all_modules.filter(m => m.avg_score < 50);
+
+        let html = '';
+
+        // High Performance Section (>80%)
+        if (highPerformers.length > 0) {
+            html += `
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-arrow-trend-up"></i> High Performance (&gt;80%)
+                    </div>
+            `;
+
+            highPerformers.forEach(module => {
+                html += `
+                    <div class="highlight-item" style="margin-bottom: 0.75rem;">
+                        <div class="highlight-icon success">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <div class="highlight-content" style="flex: 1;">
+                            <div class="highlight-value" style="font-size: 0.95rem;">${module.module_name}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem;">
+                                <div class="highlight-detail">${module.quiz_count} quiz${module.quiz_count !== 1 ? 'zes' : ''}</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: #10b981;">${module.avg_score}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+        }
+
+        // Moderate Performance Section (50-80%)
+        if (moderatePerformers.length > 0) {
+            html += `
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-chart-line"></i> Moderate Performance (50-80%)
+                    </div>
+            `;
+
+            moderatePerformers.forEach(module => {
+                html += `
+                    <div class="highlight-item" style="margin-bottom: 0.75rem;">
+                        <div class="highlight-icon" style="background: #fff; border: 1px solid #3b82f6;">
+                            <i class="fa-solid fa-chart-simple" style="color: #3b82f6;"></i>
+                        </div>
+                        <div class="highlight-content" style="flex: 1;">
+                            <div class="highlight-value" style="font-size: 0.95rem;">${module.module_name}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem;">
+                                <div class="highlight-detail">${module.quiz_count} quiz${module.quiz_count !== 1 ? 'zes' : ''}</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: #3b82f6;">${module.avg_score}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+        }
+
+        // Low Performance Section (<50%)
+        if (lowPerformers.length > 0) {
+            html += `
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #ef4444; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Low Performance (&lt;50%)
+                    </div>
+            `;
+
+            lowPerformers.forEach(module => {
+                html += `
+                    <div class="highlight-item" style="margin-bottom: 0.75rem;">
+                        <div class="highlight-icon warning">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                        </div>
+                        <div class="highlight-content" style="flex: 1;">
+                            <div class="highlight-value" style="font-size: 0.95rem;">${module.module_name}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem;">
+                                <div class="highlight-detail">${module.quiz_count} quiz${module.quiz_count !== 1 ? 'zes' : ''}</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: #ef4444;">${module.avg_score}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    function showMessage(msg) {
+        const el = document.createElement('div');
+        el.style.cssText = 'position:fixed;top:100px;left:50%;transform:translateX(-50%);background:#fef3c7;color:#78350f;padding:1rem 2rem;border-radius:8px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;';
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    }
+</script>
+{% endblock %}

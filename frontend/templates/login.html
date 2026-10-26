@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Aegis{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Login to continue to Aegis AI Study Agent</p>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="identifier">Email or Username</label>
+                {{ form.identifier(class="form-input", placeholder="Enter your email or username") }}
+                {% for error in form.identifier.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                {{ form.password(class="form-input", placeholder="Enter your password") }}
+                {% for error in form.password.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="checkbox-group">
+                {{ form.remember_me() }}
+                <label for="remember_me">Remember me</label>
+            </div>
+
+            <p class="forgot-link">
+                <a href="{{ url_for('forgot_password') }}">Forgot password?</a>
+            </p>
+
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+
+        <p class="switch-link">
+            Don't have an account?
+            <a href="{{ url_for('register') }}">Register here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

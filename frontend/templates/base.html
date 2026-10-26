@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Aegis{% endblock %}</title>
+    <script>
+    (function() {
+        const theme = localStorage.getItem('aegis_theme') || 'light';
+        const resolvedTheme = theme === 'auto'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : theme;
+        document.documentElement.setAttribute('data-theme', resolvedTheme);
+    })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    {% set current_page = current_page|default('upload') %}
+    {% set is_auth_page = request.endpoint in ['login', 'register'] %}
+    {% set show_sidebar = session.get("user_id") and not hide_sidebar|default(false) and not is_auth_page %}
+    {% set show_navbar = not hide_navbar|default(false) and not is_auth_page %}
+
+    {% if show_sidebar %}
+    <!-- Mobile Hamburger Menu -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-inner">
+            <div class="sidebar-logo">
+                <img src="{{ url_for('static', filename='images/aegis-logo.png') }}" alt="Aegis logo" class="sidebar-logo-img">
+                Aegis
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="sidebar-group-label">Insights</div>
+                <a href="{{ url_for('summary.daily_summary_page') }}"
+                   class="sidebar-link {% if current_page == 'daily_summary' %}active{% endif %}">
+                    <i class="fa-solid fa-book-open-reader"></i>
+                    <span>Daily Summary</span>
+                </a>
+                <a href="{{ url_for('reflection') }}"
+                   class="sidebar-link {% if current_page == 'reflection' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Reflection</span>
+                </a>
+
+                <div class="sidebar-group-label">Workspace</div>
+                <a href="{{ url_for('plan.plan_page') }}"
+                   class="sidebar-link {% if current_page == 'plan' %}active{% endif %}">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>Study Planner</span>
+                </a>
+                <a href="{{ url_for('tracker.tracker_page') }}"
+                   class="sidebar-link {% if current_page == 'tracker' %}active{% endif %}">
+                    <i class="fa-solid fa-stopwatch"></i>
+                    <span>Study Tracker</span>
+                </a>
+                <a href="{{ url_for('assignment_checker.assignment_checker_page') }}"
+                   class="sidebar-link {% if current_page == 'assignment_checker' %}active{% endif %}">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    <span>Assignment Checker</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="{{ url_for('settings') }}"
+                   class="sidebar-link sidebar-footer-link {% if current_page == 'settings' %}active{% endif %}">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+                <div class="sidebar-user-card">
+                    <a href="{{ url_for('settings_profile') }}" class="sidebar-user-profile-link">
+                        {% if current_user_avatar_url %}
+                            <img src="{{ current_user_avatar_url }}" alt="Profile" class="sidebar-user-avatar">
+                        {% else %}
+                            <div class="sidebar-user-avatar-placeholder">
+                                {{ current_user_initials }}
+                            </div>
+                        {% endif %}
+                        <div class="sidebar-user-info">
+                            <p class="sidebar-user-name">{{ current_user.username if current_user else 'User' }}</p>
+                        </div>
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="sidebar-logout-icon" title="Logout" onclick="event.stopPropagation();">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </aside>
+    {% endif %}
+
+    <div class="{% if show_sidebar %}page-with-sidebar{% endif %}">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <!-- Flash Modal -->
+                <div class="flash-modal-overlay" id="flashModalOverlay">
+                    <div class="flash-modal">
+                        <div class="flash-modal-content">
+                            {% for category, message in messages %}
+                                <div class="flash-modal-icon {{ category }}">
+                                    {% if category == 'success' %}
+                                        <i class="fa-solid fa-circle-check"></i>
+                                    {% elif category == 'danger' or category == 'error' %}
+                                        <i class="fa-solid fa-circle-xmark"></i>
+                                    {% elif category == 'warning' %}
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-circle-info"></i>
+                                    {% endif %}
+                                </div>
+                                <h3 class="flash-modal-title">
+                                    {% if category == 'success' %}Success!
+                                    {% elif category == 'danger' or category == 'error' %}Error
+                                    {% elif category == 'warning' %}Warning
+                                    {% else %}Notice
+                                    {% endif %}
+                                </h3>
+                                <p class="flash-modal-message">{{ message }}</p>
+                            {% endfor %}
+                            <button class="flash-modal-close" id="flashModalClose">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <button class="flash-modal-btn" onclick="document.getElementById('flashModalOverlay').style.display='none'">
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <main class="main-container">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Flash modal functionality
+            const flashModalOverlay = document.getElementById('flashModalOverlay');
+            const flashModalClose = document.getElementById('flashModalClose');
+
+            if (flashModalOverlay) {
+                flashModalOverlay.style.display = 'flex';
+
+                if (flashModalClose) {
+                    flashModalClose.addEventListener('click', function() {
+                        flashModalOverlay.style.display = 'none';
+                    });
+                }
+
+                flashModalOverlay.addEventListener('click', function(e) {
+                    if (e.target === flashModalOverlay) {
+                        flashModalOverlay.style.display = 'none';
+                    }
+                });
+            }
+
+            // User dropdown menu functionality
+            const dropdownBtn = document.getElementById("userDropdownBtn");
+            const dropdownContainer = document.querySelector(".user-dropdown-container");
+            const dropdownMenu = document.getElementById("userDropdownMenu");
+
+            if (dropdownBtn && dropdownContainer) {
+                dropdownBtn.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    dropdownContainer.classList.toggle("open");
+                });
+
+                document.addEventListener("click", function (e) {
+                    if (!dropdownContainer.contains(e.target)) {
+                        dropdownContainer.classList.remove("open");
+                    }
+                });
+
+                const dropdownLinks = dropdownMenu.querySelectorAll(".user-dropdown-link");
+                dropdownLinks.forEach(function (link) {
+                    link.addEventListener("click", function () {
+                        dropdownContainer.classList.remove("open");
+                    });
+                });
+            }
+        });
+    </script>
+    {% if session.get("user_id") and not hide_sidebar|default(false) %}
+    {% include "coach_widget.html" %}
+    {% endif %}
+    {% if session.get("user_id") %}
+    <script>
+        window.connectAegisTray = async function connectAegisTray() {
+            const bridgeUrl = 'http://127.0.0.1:8765';
+            const currentUsername = {{ (session.get("username") or (current_user.get_username() if current_user else ""))|tojson }};
+            const statusUrl = new URL(`${bridgeUrl}/status`);
+            statusUrl.searchParams.set('server_url', window.location.origin);
+            statusUrl.searchParams.set('username', currentUsername);
+
+            let needsConnect = true;
+            try {
+                const trayStatus = await fetch(statusUrl.toString(), {
+                    method: 'GET',
+                    cache: 'no-store',
+                });
+                if (trayStatus.ok) {
+                    const trayData = await trayStatus.json();
+                    if (trayData.connected_to_current) {
+                        needsConnect = false;
+                    }
+                }
+            } catch (err) {
+                console.debug('[AegisTray] Bridge /status unreachable from browser, syncing via server:', err);
+            }
+
+            if (!needsConnect) return;
+
+            try {
+                const tokenResp = await fetch('/tracker/desktop-bridge-token', { cache: 'no-store' });
+                if (!tokenResp.ok) {
+                    console.warn('[AegisTray] Failed to fetch desktop bridge token:', tokenResp.status);
+                    return;
+                }
+                const data = await tokenResp.json();
+                if (!data.ok || !data.token) return;
+
+                await fetch(`${bridgeUrl}/connect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: data.token,
+                        server_url: data.server_url,
+                        username: data.username,
+                    }),
+                });
+            } catch (err) {
+                console.debug('[AegisTray] Direct bridge /connect skipped (server-side config synced):', err);
+            }
+        };
+        window.connectAegisTray();
+    </script>
+    {% endif %}
+
+    <script>
+    // Mobile sidebar toggle
+    (function() {
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        if (mobileMenuBtn && sidebar && overlay) {
+            mobileMenuBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active');
+                mobileMenuBtn.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            });
+
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+                mobileMenuBtn.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            });
+
+            // Close sidebar when clicking a link on mobile
+            const sidebarLinks = sidebar.querySelectorAll('.sidebar-link, .sidebar-logout-icon, .sidebar-user-profile-link');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 820) {
+                        sidebar.classList.remove('mobile-open');
+                        overlay.classList.remove('active');
+                        mobileMenuBtn.classList.remove('active');
+                        document.body.classList.remove('sidebar-open');
+                    }
+                });
+            });
+        }
+    })();
+    </script>
+
+    <!-- Aegis Theme Loader -->
+    <script>
+    (function() {
+        function applyAegisTheme() {
+            const theme = localStorage.getItem('aegis_theme') || 'light';
+            const fontSize = localStorage.getItem('aegis_font_size') || '16';
+
+            // Apply theme
+            if (theme === 'auto') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.body.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            } else {
+                document.body.setAttribute('data-theme', theme);
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+
+            // Apply font size
+            document.body.style.fontSize = fontSize + 'px';
+            document.documentElement.style.fontSize = fontSize + 'px';
+        }
+
+        // Apply immediately
+        applyAegisTheme();
+
+        // Watch for system theme changes when auto mode is selected
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+            const theme = localStorage.getItem('aegis_theme') || 'light';
+            if (theme === 'auto') {
+                applyAegisTheme();
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

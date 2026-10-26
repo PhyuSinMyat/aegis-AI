@@ -1,0 +1,1154 @@
+{% extends "base.html" %}
+{% block title %}Assignment Checker | Aegis{% endblock %}
+
+{% block content %}
+<style>
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.ac-page { max-width: 1050px; margin: 0 auto; padding: 0 1rem 1.5rem; }
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.ac-header { margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.ac-header-text h1 { font-size: 1.3rem; font-weight: 700; color: #1a1a2e; margin: 0; display: flex; align-items: center; gap: .4rem; }
+.ac-header-text h1 i { font-size: 1.1rem; }
+
+/* ── View toggle ─────────────────────────────────────────────────────────── */
+.ac-view-toggle { display: flex; gap: .5rem; flex-shrink: 0; }
+.ac-view-btn {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .5rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 8px;
+  background: #f9fafb; font-size: .875rem; font-weight: 500; color: #64748b;
+  cursor: pointer; transition: all .15s;
+}
+.ac-view-btn.active { border-color: #6254D8; background: #F3F0FF; color: #6254D8; }
+.ac-view-btn:hover:not(.active) { border-color: #d1d5db; background: #f3f4f6; color: #374151; }
+
+/* ── History panel ───────────────────────────────────────────────────────── */
+.ac-history-panel { display: none; }
+.ac-history-panel.visible { display: block; }
+.ac-history-empty { text-align: center; padding: 5rem 2rem 4rem; }
+.ac-history-empty-icon { width: 80px; height: 80px; border-radius: 50%; background: #f3f4f6; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; }
+.ac-history-empty-icon i { font-size: 2rem; color: #d1d5db; }
+.ac-history-empty h3 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin: 0 0 .5rem; }
+.ac-history-empty p { font-size: .9rem; color: #9ca3af; margin: 0 0 1.5rem; line-height: 1.6; }
+.ac-history-empty-btn { display: inline-flex; align-items: center; gap: .45rem; padding: .6rem 1.4rem; background: #6254D8; color: #fff; border: none; border-radius: 8px; font-size: .875rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+.ac-history-empty-btn:hover { background: #5145B8; }
+.ac-history-list { display: flex; flex-direction: column; gap: .75rem; }
+.ac-history-item { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; cursor: pointer; transition: all .15s; position: relative; }
+.ac-history-item:hover { border-color: #b0a6e8; box-shadow: 0 2px 8px rgba(98,84,216,.1); }
+.ac-history-score { width: 52px; height: 52px; border-radius: 8px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; line-height: 1; }
+.ac-history-score .hs-num { font-size: 1.2rem; }
+.ac-history-score .hs-pct { font-size: .65rem; font-weight: 600; opacity: .75; margin-top: .1rem; }
+.ac-history-body { flex: 1; min-width: 0; }
+.ac-history-title { font-weight: 600; color: #1a1a2e; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: .25rem; }
+.ac-history-meta  { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: .78rem; color: #9ca3af; }
+.ac-history-meta .ac-hbadge { display: inline-flex; align-items: center; gap: .25rem; padding: .15rem .55rem; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+.ac-hbadge.rubric  { background: #ede9fe; color: #6d28d9; }
+.ac-hbadge.generic { background: #f3f4f6; color: #64748b; }
+.ac-hbadge.lenient { background: #dcfce7; color: #15803d; }
+.ac-hbadge.normal  { background: #dbeafe; color: #1d4ed8; }
+.ac-hbadge.strict  { background: #fff7ed; color: #c2410c; }
+.ac-history-del { background: none; border: none; cursor: pointer; color: #d1d5db; font-size: .95rem; padding: .4rem; border-radius: 6px; transition: all .15s; flex-shrink: 0; }
+.ac-history-del:hover { color: #d97706; background: #fffbeb; }
+.ac-history-confirm { display: flex; align-items: center; gap: .4rem; flex-shrink: 0; }
+.ac-history-confirm span { font-size: .78rem; color: #64748b; white-space: nowrap; }
+.ac-confirm-del { padding: .3rem .7rem; border: none; border-radius: 6px; background: #d97706; color: #fff; font-size: .78rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+.ac-confirm-del:hover { background: #b45309; }
+.ac-confirm-cancel { padding: .3rem .7rem; border: 1.5px solid #e5e7eb; border-radius: 6px; background: #fff; color: #64748b; font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+.ac-confirm-cancel:hover { border-color: #d1d5db; background: #f3f4f6; color: #374151; }
+.ac-history-loading { text-align: center; padding: 2rem; color: #64748b; font-size: .875rem; }
+
+.ac-history-result-bar { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.25rem; padding: .75rem 1.1rem; background: #ede9fe; border: 1px solid #c4b5fd; border-radius: 8px; font-size: .875rem; color: #4c1d95; }
+.ac-history-result-bar i { flex-shrink: 0; }
+.ac-history-result-bar strong { font-weight: 600; }
+.ac-history-result-bar .ac-hrb-back { margin-left: auto; cursor: pointer; background: none; border: none; color: #6d28d9; font-size: .875rem; font-weight: 600; padding: 0; display: flex; align-items: center; gap: .3rem; }
+.ac-history-result-bar .ac-hrb-back:hover { text-decoration: underline; }
+
+/* ── Input sections ──────────────────────────────────────────────────────── */
+.ac-section {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 1.25rem; margin-bottom: 1rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  transition: border-color .2s, background .2s;
+}
+.ac-section.drop-active { border-color: #6254D8; border-style: dashed; background: #faf9ff; }
+.ac-section-heading {
+  font-size: .95rem; font-weight: 600; color: #1a1a2e;
+  margin: 0 0 .2rem; display: flex; align-items: center; gap: .4rem;
+}
+.ac-section-heading i { color: #6254D8; font-size: .88rem; }
+.ac-section-desc { font-size: .8rem; color: #64748b; margin: 0 0 .875rem; line-height: 1.45; }
+
+/* ── Upload zone ─────────────────────────────────────────────────────────── */
+.ac-upload-zone {
+  border: 2px dashed #d1d5db; border-radius: 8px; padding: 1.25rem 1rem;
+  text-align: center; cursor: pointer; transition: all .2s; background: #fafafa;
+}
+.ac-upload-zone:hover, .ac-upload-zone.dragover { border-color: #6254D8; background: #f8f7ff; }
+.ac-upload-zone i.zone-icon { font-size: 1.3rem; color: #9ca3af; margin-bottom: .4rem; display: block; }
+.ac-upload-zone.dragover i.zone-icon { color: #6254D8; }
+.ac-upload-zone p  { margin: .1rem 0; font-size: .82rem; color: #64748b; }
+.ac-upload-zone strong { color: #374151; }
+.ac-upload-zone small  { color: #9ca3af; font-size: .72rem; }
+
+/* ── File list ───────────────────────────────────────────────────────────── */
+.ac-file-list { display: none; flex-direction: column; gap: .4rem; }
+.ac-file-list.visible { display: flex; }
+.ac-file-row {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .5rem .75rem; background: #fff; border: 1px solid #e5e7eb;
+  border-radius: 6px; font-size: .85rem; transition: border-color .15s;
+}
+.ac-file-row:hover { border-color: #d1d5db; }
+.ac-file-row-icon { flex-shrink: 0; font-size: 1rem; width: 1.1rem; text-align: center; }
+.ac-file-row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #1f2937; font-weight: 500; }
+.ac-file-row-size { color: #9ca3af; font-size: .75rem; white-space: nowrap; }
+.ac-file-row-ok { color: #16a34a; font-size: .75rem; flex-shrink: 0; }
+.ac-file-row-remove {
+  cursor: pointer; background: none; border: none; color: #d1d5db;
+  font-size: .82rem; padding: .15rem; border-radius: 4px; transition: all .15s; flex-shrink: 0;
+}
+.ac-file-row-remove:hover { color: #ef4444; background: #fef2f2; }
+
+/* ── Add-files control ───────────────────────────────────────────────────── */
+.ac-add-btn {
+  display: none; align-items: center; gap: .3rem;
+  padding: .35rem .7rem; background: none; border: 1.5px dashed #d1d5db;
+  border-radius: 6px; font-size: .78rem; font-weight: 500; color: #64748b;
+  cursor: pointer; margin-top: .5rem; transition: all .15s;
+}
+.ac-add-btn.visible { display: inline-flex; }
+.ac-add-btn:hover { border-color: #6254D8; color: #6254D8; background: #faf9ff; }
+
+/* ── Processing indicator ────────────────────────────────────────────────── */
+.ac-processing { padding: .75rem; text-align: center; font-size: .82rem; color: #64748b; }
+.ac-processing i { margin-right: .3rem; }
+
+/* ── Inline validation ───────────────────────────────────────────────────── */
+.ac-inline-error { display: none; align-items: center; gap: .35rem; font-size: .8rem; color: #dc2626; margin-top: .5rem; }
+.ac-inline-error.visible { display: flex; }
+.ac-inline-error i { font-size: .75rem; flex-shrink: 0; margin-top: .05rem; }
+
+/* ── General error ───────────────────────────────────────────────────────── */
+.ac-error { display: none; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: .75rem 1rem; margin-bottom: .75rem; color: #92400e; font-size: .85rem; align-items: center; gap: .5rem; }
+.ac-error.visible { display: flex; }
+
+/* ── Submit row ──────────────────────────────────────────────────────────── */
+.ac-submit-row { display: flex; justify-content: flex-end; margin-top: .25rem; margin-bottom: 1rem; }
+.ac-submit-btn {
+  padding: .6rem 1.5rem; background: #6254D8; color: #fff; border: none;
+  border-radius: 8px; font-size: .875rem; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: .4rem;
+  transition: background .15s, opacity .15s;
+}
+.ac-submit-btn:hover:not(:disabled) { background: #5145B8; }
+.ac-submit-btn:active:not(:disabled) { transform: scale(.99); }
+.ac-submit-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+.ac-loading { display: none; text-align: center; padding: 3rem 1.5rem; }
+.ac-loading.visible { display: block; }
+.ac-spinner { width: 44px; height: 44px; border: 3.5px solid #e5e7eb; border-top-color: #6254D8; border-radius: 50%; animation: acSpin .8s linear infinite; margin: 0 auto 1rem; }
+@keyframes acSpin { to { transform: rotate(360deg); } }
+.ac-loading p { color: #64748b; font-size: .9rem; }
+.ac-loading .ac-tip { font-size: .8rem; color: #9ca3af; margin-top: .4rem; }
+
+/* ── Results ─────────────────────────────────────────────────────────────── */
+.ac-results { display: none; }
+.ac-results.visible { display: block; }
+.ac-reset-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .55rem 1.15rem; border: 1.5px solid #e5e7eb; border-radius: 8px; background: #fff; font-size: .85rem; font-weight: 500; color: #374151; cursor: pointer; margin-bottom: 1.25rem; transition: all .15s; }
+.ac-reset-btn:hover { border-color: #6254D8; color: #6254D8; }
+
+.ac-off-topic-alert { display: none; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; font-size: .85rem; color: #9a3412; align-items: flex-start; gap: .75rem; }
+.ac-off-topic-alert.visible { display: flex; }
+.ac-off-topic-alert i { font-size: 1.1rem; margin-top: .05rem; flex-shrink: 0; }
+
+/* ── Score hero ──────────────────────────────────────────────────────────── */
+.ac-score-hero { background: linear-gradient(135deg, #6254D8 0%, #7c3aed 100%); border-radius: 12px; padding: 1.5rem; color: #fff; text-align: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+.ac-score-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+.ac-score-num   { font-size: 3.5rem; font-weight: 700; line-height: 1; margin-bottom: .15rem; }
+.ac-score-grade { font-size: 1.2rem; font-weight: 700; opacity: .9; margin-bottom: .25rem; }
+.ac-score-sub   { font-size: .78rem; opacity: .75; }
+.ac-score-marks { font-size: 1rem; font-weight: 600; opacity: .95; margin-top: .3rem; }
+.ac-mode-badge { display: inline-flex; align-items: center; gap: .3rem; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: .2rem .75rem; font-size: .72rem; font-weight: 600; margin-top: .5rem; }
+.ac-mode-note { font-size: .78rem; color: rgba(255,255,255,.7); margin-top: .5rem; font-style: italic; position: relative; }
+
+/* ── Rubric criteria cards ───────────────────────────────────────────────── */
+.ac-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.ac-card-title { font-size: .9rem; font-weight: 600; color: #1a1a2e; margin: 0 0 .75rem; display: flex; align-items: center; gap: .4rem; }
+.ac-card-title i { color: #6254D8; font-size: .85rem; }
+.ac-rubric-cards { display: flex; flex-direction: column; gap: .75rem; }
+.ac-rubric-card { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,.04); border-left: 3px solid #e5e7eb; transition: all .2s; position: relative; overflow: hidden; }
+.ac-rubric-card.band-A { border-left-color: #16a34a; background: linear-gradient(90deg, #f0fdf4 0%, #fff 40px); }
+.ac-rubric-card.band-B { border-left-color: #2563eb; background: linear-gradient(90deg, #eff6ff 0%, #fff 40px); }
+.ac-rubric-card.band-C { border-left-color: #d97706; background: linear-gradient(90deg, #fffbeb 0%, #fff 40px); }
+.ac-rubric-card.band-D { border-left-color: #dc2626; background: linear-gradient(90deg, #fef2f2 0%, #fff 40px); }
+.ac-rubric-card.band-F { border-left-color: #dc2626; background: linear-gradient(90deg, #fef2f2 0%, #fff 40px); }
+.ac-rubric-card-header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .6rem; }
+.ac-rubric-card-title { font-size: .9rem; font-weight: 700; color: #1a1a2e; display: flex; align-items: center; gap: .4rem; flex: 1; }
+.ac-rubric-card-icon { font-size: 1.1rem; opacity: .8; }
+.ac-rubric-card-score { display: flex; align-items: center; gap: .6rem; }
+.ac-rubric-score-circle { position: relative; width: 48px; height: 48px; }
+.ac-rubric-score-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: #1a1a2e; line-height: 1.1; }
+.ac-rubric-score-num { font-size: 1rem; }
+.ac-rubric-score-label { font-size: .58rem; font-weight: 600; color: #64748b; }
+.ac-rubric-band-badge { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .65rem; border-radius: 20px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+.ac-rubric-band-badge.band-A { background: #dcfce7; color: #15803d; }
+.ac-rubric-band-badge.band-B { background: #dbeafe; color: #1d4ed8; }
+.ac-rubric-band-badge.band-C { background: #fef9c3; color: #a16207; }
+.ac-rubric-band-badge.band-D { background: #ffedd5; color: #c2410c; }
+.ac-rubric-band-badge.band-F { background: #fee2e2; color: #dc2626; }
+.ac-rubric-feedback { margin-top: .4rem; }
+.ac-rubric-feedback-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
+.ac-rubric-feedback-list li { font-size: .82rem; color: #374151; line-height: 1.4; padding-left: 1.2rem; position: relative; }
+.ac-rubric-feedback-list li.positive::before { content: '\2713'; position: absolute; left: 0; color: #16a34a; font-weight: 700; }
+.ac-rubric-feedback-list li.negative::before { content: '\26A0'; position: absolute; left: 0; color: #d97706; }
+
+/* ── Generic criteria grid ───────────────────────────────────────────────── */
+.ac-criteria-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .875rem; margin-bottom: 1.25rem; }
+@media (max-width: 680px) { .ac-criteria-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 440px) { .ac-criteria-grid { grid-template-columns: 1fr; } }
+.ac-criterion { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.ac-criterion-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
+.ac-criterion-name { font-size: .78rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
+.ac-criterion-score { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+.ac-criterion-bar { height: 6px; background: #f3f4f6; border-radius: 3px; margin-bottom: .6rem; overflow: hidden; }
+.ac-criterion-fill { height: 100%; border-radius: 3px; transition: width .8s ease; }
+.ac-criterion-comment { font-size: .78rem; color: #64748b; line-height: 1.5; }
+
+/* ── Strengths / Weaknesses ──────────────────────────────────────────────── */
+.ac-sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
+@media (max-width: 600px) { .ac-sw-grid { grid-template-columns: 1fr; } }
+.ac-sw-panel { border-radius: 12px; padding: 1rem; position: relative; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.ac-sw-panel.strengths  { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #86efac; }
+.ac-sw-panel.weaknesses { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #fde68a; }
+.ac-sw-title { font-size: .9rem; font-weight: 700; margin-bottom: .75rem; display: flex; align-items: center; gap: .4rem; }
+.ac-sw-panel.strengths .ac-sw-title  { color: #15803d; }
+.ac-sw-panel.weaknesses .ac-sw-title { color: #b45309; }
+.ac-sw-title i { font-size: 1rem; }
+.ac-sw-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+.ac-sw-list li { font-size: .82rem; color: #374151; line-height: 1.4; padding: .45rem .65rem .45rem 2.2rem; position: relative; background: rgba(255,255,255,.6); border-radius: 8px; }
+.ac-sw-list li::before { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); font-size: 1.1rem; }
+.strengths .ac-sw-list li::before  { content: '\2713'; color: #16a34a; font-weight: 700; }
+.weaknesses .ac-sw-list li::before { content: '\26A0'; color: #d97706; font-weight: 700; }
+
+/* ── Improvements ────────────────────────────────────────────────────────── */
+.ac-improvements-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .6rem; }
+.ac-improvements-list li { font-size: .82rem; color: #1f2937; line-height: 1.5; padding: .65rem .85rem .65rem 2.5rem; position: relative; background: linear-gradient(90deg, #F3F0FF 0%, #f9fafb 40px); border-left: 3px solid #6254D8; border-radius: 0 8px 8px 0; transition: all .2s; }
+.ac-improvements-list li:hover { background: linear-gradient(90deg, #ede9fe 0%, #f3f4f6 40px); transform: translateX(3px); }
+.ac-improvements-list li::before { content: '\2192'; position: absolute; left: .9rem; top: .65rem; color: #6254D8; font-weight: 700; font-size: 1.1rem; }
+
+/* ── Collapsible ─────────────────────────────────────────────────────────── */
+.ac-section-toggle { width: 100%; background: none; border: none; text-align: left; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: space-between; }
+.ac-section-toggle .ac-toggle-icon { transition: transform .2s; color: #9ca3af; }
+.ac-section-toggle.collapsed .ac-toggle-icon { transform: rotate(-90deg); }
+.ac-section-body { margin-top: 1rem; }
+.ac-section-body.hidden { display: none; }
+</style>
+
+<div class="ac-page">
+  <div class="ac-header">
+    <div class="ac-header-text">
+      <h1><i class="fa-solid fa-clipboard-check" style="color:#6254D8;margin-right:.5rem;"></i>Assignment Checker</h1>
+    </div>
+    <div class="ac-view-toggle">
+      <button class="ac-view-btn active" id="acViewCheck" onclick="switchView('check')">
+        <i class="fa-solid fa-magnifying-glass"></i> Check
+      </button>
+      <button class="ac-view-btn" id="acViewHistory" onclick="switchView('history')">
+        <i class="fa-solid fa-clock-rotate-left"></i> History
+        <span class="ac-history-count" id="acHistoryCount" style="display:none;background:#6254D8;color:#fff;border-radius:20px;padding:.05rem .45rem;font-size:.7rem;font-weight:700;"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ HISTORY PANEL ══════════════════════════════════════════ -->
+  <div class="ac-history-panel" id="acHistoryPanel">
+    <div class="ac-history-loading" id="acHistoryLoading">
+      <i class="fa-solid fa-spinner fa-spin" style="margin-right:.4rem;"></i> Loading history…
+    </div>
+    <div id="acHistoryContent" style="display:none;"></div>
+  </div>
+
+  <!-- ═══ INPUT AREA ═════════════════════════════════════════════ -->
+  <div id="acInputArea">
+    <!-- ─── Marking Criteria ─────────────────────────────────── -->
+    <div class="ac-section" id="acBriefCard">
+      <h2 class="ac-section-heading"><i class="fa-solid fa-table-list"></i> Marking Criteria</h2>
+      <p class="ac-section-desc">Upload the rubric, marking scheme or assignment brief so the AI grades against real criteria.</p>
+
+      <div class="ac-upload-zone" id="acBriefUploadZone">
+        <i class="fa-solid fa-file-arrow-up zone-icon"></i>
+        <p><strong>Drop files here</strong> or click to browse</p>
+        <small>PDF, Word, Excel, images — Max 50 MB each</small>
+      </div>
+      <input type="file" id="acBriefFileInput" multiple style="display:none;">
+
+      <div class="ac-file-list" id="acContextFileList"></div>
+
+      <button class="ac-add-btn" id="acBriefAddBtn" type="button">
+        <i class="fa-solid fa-plus"></i> Add files
+      </button>
+
+      <div class="ac-inline-error" id="acBriefError">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span></span>
+      </div>
+    </div>
+
+    <!-- ─── Assignment Submission ────────────────────────────── -->
+    <div class="ac-section" id="acInputCard">
+      <h2 class="ac-section-heading"><i class="fa-solid fa-pen-to-square"></i> Assignment Submission</h2>
+      <p class="ac-section-desc">Upload your assignment files — essays, code, notebooks, presentations, images.</p>
+
+      <div class="ac-upload-zone" id="acUploadZone">
+        <i class="fa-solid fa-file-arrow-up zone-icon"></i>
+        <p><strong>Drop files here</strong> or click to browse</p>
+        <small>PDF, Word, Excel, PowerPoint, images, code (.py .js .java .cpp …), notebooks (.ipynb) — Max 50 MB each</small>
+      </div>
+      <input type="file" id="acFileInput" multiple style="display:none;">
+
+      <div class="ac-file-list" id="acFileList"></div>
+
+      <button class="ac-add-btn" id="acSubmissionAddBtn" type="button">
+        <i class="fa-solid fa-plus"></i> Add files
+      </button>
+
+      <div class="ac-inline-error" id="acSubmissionError">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span></span>
+      </div>
+    </div>
+
+    <div class="ac-error" id="acError">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span id="acErrorMsg"></span>
+    </div>
+
+    <div class="ac-submit-row">
+      <button class="ac-submit-btn" id="acSubmitBtn" disabled>
+        <i class="fa-solid fa-magnifying-glass"></i>
+        Analyse Assignment
+      </button>
+    </div>
+  </div>
+
+  <input type="hidden" id="acStrictness" value="strict">
+  <textarea id="acRequirements" style="display:none;"></textarea>
+
+  <!-- ═══ Loading ════════════════════════════════════════════════ -->
+  <div class="ac-loading" id="acLoading">
+    <div class="ac-spinner"></div>
+    <p>Analysing your assignment…</p>
+    <p class="ac-tip">This may take 20–60 seconds depending on file size and rubric complexity.</p>
+  </div>
+
+  <!-- ═══ Results ════════════════════════════════════════════════ -->
+  <div class="ac-results" id="acResults">
+    <div class="ac-history-result-bar" id="acHistoryResultBar" style="display:none;">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <span>Viewing saved result: <strong id="acHistoryResultTitle"></strong></span>
+      <button class="ac-hrb-back" id="acHistoryResultBack">
+        <i class="fa-solid fa-arrow-left"></i> Back to History
+      </button>
+    </div>
+
+    <button class="ac-reset-btn" id="acResetBtn">
+      <i class="fa-solid fa-arrow-left"></i> Check Another Assignment
+    </button>
+
+    <div class="ac-off-topic-alert" id="acOffTopicAlert">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <div>
+        <strong>Off-Topic Detected</strong>
+        <div id="acOffTopicReason" style="margin-top:.25rem;"></div>
+      </div>
+    </div>
+
+    <div class="ac-score-hero">
+      <div class="ac-score-num" id="acScoreNum">—</div>
+      <div class="ac-score-grade" id="acScoreGrade">—</div>
+      <div class="ac-score-sub" id="acScoreSub">Overall Score</div>
+      <div class="ac-score-marks" id="acScoreMarks" style="display:none;"></div>
+      <div>
+        <span class="ac-mode-badge" id="acModeBadge">
+          <i class="fa-solid fa-list-check"></i>
+          <span id="acModeBadgeText">Rubric Mode</span>
+        </span>
+      </div>
+      <div class="ac-mode-note" id="acModeNote" style="display:none;"></div>
+    </div>
+
+    <div class="ac-card" id="acRubricSection" style="display:none;">
+      <button class="ac-section-toggle" data-target="acRubricBody">
+        <span class="ac-card-title" style="margin:0;">
+          <i class="fa-solid fa-chart-simple"></i> Rubric Breakdown
+        </span>
+        <i class="fa-solid fa-chevron-down ac-toggle-icon"></i>
+      </button>
+      <div class="ac-section-body" id="acRubricBody">
+        <div class="ac-rubric-cards" id="acRubricCards"></div>
+      </div>
+    </div>
+
+    <div class="ac-criteria-grid" id="acCriteriaGrid" style="display:none;"></div>
+
+    <div class="ac-sw-grid">
+      <div class="ac-sw-panel strengths">
+        <div class="ac-sw-title"><i class="fa-solid fa-thumbs-up"></i> Strengths</div>
+        <ul class="ac-sw-list" id="acStrengths"></ul>
+      </div>
+      <div class="ac-sw-panel weaknesses">
+        <div class="ac-sw-title"><i class="fa-solid fa-thumbs-down"></i> Weaknesses</div>
+        <ul class="ac-sw-list" id="acWeaknesses"></ul>
+      </div>
+    </div>
+
+    <div class="ac-card">
+      <div class="ac-card-title"><i class="fa-solid fa-arrow-up"></i> How to Improve</div>
+      <div class="ac-improvements-list" id="acImprovements"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let selectedFiles      = [];
+  let contextFileText    = "";
+  let contextFiles       = [];
+  let contextFileObjects = [];
+  let contextNativeCount = 0;
+  let briefFileLoaded    = false;
+  const MAX_FILE_BYTES   = 50000000;
+  const MAX_FILE_LABEL   = "50 MB";
+
+  // ── Element refs ───────────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+
+  const inputArea          = $("acInputArea");
+  const briefCard          = $("acBriefCard");
+  const briefUploadZone    = $("acBriefUploadZone");
+  const briefFileInput     = $("acBriefFileInput");
+  const contextFileListEl  = $("acContextFileList");
+  const briefAddBtn        = $("acBriefAddBtn");
+  const briefErrorEl       = $("acBriefError");
+  const briefErrorSpan     = briefErrorEl.querySelector("span");
+
+  const inputCard          = $("acInputCard");
+  const uploadZone         = $("acUploadZone");
+  const fileInput          = $("acFileInput");
+  const fileListEl         = $("acFileList");
+  const submissionAddBtn   = $("acSubmissionAddBtn");
+  const submissionErrorEl  = $("acSubmissionError");
+  const submissionErrorSpan = submissionErrorEl.querySelector("span");
+
+  const strictnessInput = $("acStrictness");
+  const requirementsEl  = $("acRequirements");
+  const submitBtn       = $("acSubmitBtn");
+  const errorBanner     = $("acError");
+  const errorMsg        = $("acErrorMsg");
+  const loadingEl       = $("acLoading");
+  const resultsEl       = $("acResults");
+  const resetBtn        = $("acResetBtn");
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function escHtml(s)  { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function scoreColor(s) { if (s>=80) return "#16a34a"; if (s>=65) return "#2563eb"; if (s>=50) return "#d97706"; return "#b45309"; }
+
+  function formatBytes(bytes) {
+    if (!Number.isFinite(bytes)) return "";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function fileKey(file) { return file.name + "::" + file.size + "::" + file.lastModified; }
+
+  function getFileTypeInfo(filename) {
+    var ext = (filename || "").split(".").pop().toLowerCase();
+    var map = {
+      pdf:"fa-file-pdf #dc2626", doc:"fa-file-word #2563eb", docx:"fa-file-word #2563eb",
+      xls:"fa-file-excel #16a34a", xlsx:"fa-file-excel #16a34a", csv:"fa-file-csv #16a34a",
+      ppt:"fa-file-powerpoint #d97706", pptx:"fa-file-powerpoint #d97706",
+      png:"fa-file-image #7c3aed", jpg:"fa-file-image #7c3aed", jpeg:"fa-file-image #7c3aed",
+      gif:"fa-file-image #7c3aed", webp:"fa-file-image #7c3aed",
+      py:"fa-file-code #3b82f6", js:"fa-file-code #eab308", ts:"fa-file-code #3b82f6",
+      java:"fa-file-code #dc2626", cpp:"fa-file-code #6366f1", c:"fa-file-code #6366f1",
+      cs:"fa-file-code #6366f1", ipynb:"fa-file-code #f97316", html:"fa-file-code #f97316",
+      css:"fa-file-code #3b82f6", md:"fa-file-lines #64748b", txt:"fa-file-lines #64748b",
+    };
+    var val = map[ext] || "fa-file #64748b";
+    var parts = val.split(" ");
+    return { icon: parts[0], color: parts[1] };
+  }
+
+  function getCriterionIcon(name) {
+    var n = (name || "").toLowerCase();
+    if (n.includes("understand") || n.includes("knowledge")) return "🎯";
+    if (n.includes("vulnerab") || n.includes("weakness")) return "🔒";
+    if (n.includes("cia") || n.includes("impact") || n.includes("triad")) return "⚡";
+    if (n.includes("mitigation") || n.includes("strateg") || n.includes("control")) return "🛡️";
+    if (n.includes("case") || n.includes("reflection") || n.includes("example")) return "💡";
+    if (n.includes("attack") || n.includes("threat") || n.includes("flow")) return "🎯";
+    if (n.includes("structure") || n.includes("format") || n.includes("organisation")) return "📋";
+    if (n.includes("technical") || n.includes("depth") || n.includes("detail")) return "🔧";
+    return "📌";
+  }
+
+  function parseFeedbackComment(comment) {
+    if (!comment || !comment.trim()) return "";
+    var sentences = comment.split(/(?<=[.!?])\s+/).filter(function(s) { return s.trim(); });
+    if (sentences.length === 0) return '<p style="color:#64748b;font-size:.875rem;">' + escHtml(comment) + '</p>';
+    var items = sentences.map(function(s) {
+      var text = s.trim();
+      var lower = text.toLowerCase();
+      if (lower.includes("clear") || lower.includes("good") || lower.includes("correct") ||
+          lower.includes("well") || lower.includes("strong") || lower.includes("effective") ||
+          lower.includes("demonstrates") || lower.includes("includes")) {
+        return '<li class="positive">' + escHtml(text) + '</li>';
+      }
+      if (lower.includes("however") || lower.includes("lack") || lower.includes("missing") ||
+          lower.includes("absent") || lower.includes("without") || lower.includes("no mention") ||
+          lower.includes("not") || lower.includes("fails") || lower.includes("weak")) {
+        return '<li class="negative">' + escHtml(text) + '</li>';
+      }
+      return '<li>' + escHtml(text) + '</li>';
+    });
+    return '<ul class="ac-rubric-feedback-list">' + items.join("") + '</ul>';
+  }
+
+  // ── Validation helpers ─────────────────────────────────────────────────────
+  function showInlineError(el, msg) {
+    el.querySelector("span").textContent = msg;
+    el.classList.add("visible");
+  }
+  function hideInlineError(el) { el.classList.remove("visible"); }
+  function hideAllErrors() {
+    hideInlineError(briefErrorEl);
+    hideInlineError(submissionErrorEl);
+    errorBanner.classList.remove("visible");
+  }
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorBanner.classList.add("visible");
+  }
+  function hideError() { errorBanner.classList.remove("visible"); }
+
+  function updateSubmitState() {
+    var rubricReady = briefFileLoaded;
+    var submissionReady = selectedFiles.length > 0;
+    submitBtn.disabled = !rubricReady || !submissionReady || loadingEl.classList.contains("visible");
+  }
+
+  function validateFileSize(file, inlineEl) {
+    if (file.size > MAX_FILE_BYTES) {
+      showInlineError(inlineEl, '"' + file.name + '" exceeds the ' + MAX_FILE_LABEL + ' limit.');
+      return false;
+    }
+    return true;
+  }
+
+  // ── Context file handling (Marking Criteria) ───────────────────────────────
+  briefFileInput.addEventListener("change", function() {
+    if (briefFileInput.files.length) addContextFiles(briefFileInput.files);
+  });
+  briefUploadZone.addEventListener("click", function() { briefFileInput.click(); });
+  briefAddBtn.addEventListener("click", function() { briefFileInput.click(); });
+
+  // Drag-and-drop: upload zone (visual feedback + stopPropagation)
+  briefUploadZone.addEventListener("dragover", function(e) { e.preventDefault(); e.stopPropagation(); briefUploadZone.classList.add("dragover"); });
+  briefUploadZone.addEventListener("dragleave", function() { briefUploadZone.classList.remove("dragover"); });
+  briefUploadZone.addEventListener("drop", function(e) {
+    e.preventDefault(); e.stopPropagation(); briefUploadZone.classList.remove("dragover");
+    if (e.dataTransfer.files.length) addContextFiles(e.dataTransfer.files);
+  });
+
+  // Drag-and-drop: section level (catches drops when zone is hidden)
+  briefCard.addEventListener("dragover", function(e) { e.preventDefault(); briefCard.classList.add("drop-active"); });
+  briefCard.addEventListener("dragleave", function(e) { if (!briefCard.contains(e.relatedTarget)) briefCard.classList.remove("drop-active"); });
+  briefCard.addEventListener("drop", function(e) {
+    e.preventDefault(); briefCard.classList.remove("drop-active");
+    if (e.dataTransfer.files.length) addContextFiles(e.dataTransfer.files);
+  });
+
+  async function addContextFiles(fileCollection) {
+    var incoming = Array.from(fileCollection);
+    var existing = new Set(contextFileObjects.map(fileKey));
+    var validFiles = [];
+
+    hideInlineError(briefErrorEl);
+    for (var i = 0; i < incoming.length; i++) {
+      if (!validateFileSize(incoming[i], briefErrorEl)) continue;
+      var key = fileKey(incoming[i]);
+      if (!existing.has(key)) { validFiles.push(incoming[i]); existing.add(key); }
+    }
+    if (!validFiles.length) { briefFileInput.value = ""; return; }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Reading files…';
+
+    // Show processing state
+    var allContextFiles = contextFileObjects.concat(validFiles);
+    briefUploadZone.style.display = "none";
+    briefAddBtn.classList.remove("visible");
+    contextFileListEl.innerHTML = '<div class="ac-processing"><i class="fa-solid fa-spinner fa-spin"></i> Processing ' + allContextFiles.length + ' file' + (allContextFiles.length === 1 ? '' : 's') + '…</div>';
+    contextFileListEl.classList.add("visible");
+
+    try {
+      var fd = new FormData();
+      allContextFiles.forEach(function(file) { fd.append("context_file", file); });
+      var resp = await fetch("/assignment-checker/extract-context", { method: "POST", body: fd });
+      var data = await resp.json();
+      if (!data.ok) throw new Error(data.error);
+
+      contextFileObjects = allContextFiles;
+      contextFiles = allContextFiles.map(function(file) { return { name: file.name, size: file.size }; });
+      contextFileText = (data.context_text || "").trim();
+      contextNativeCount = data.native_doc_count || 0;
+      briefFileLoaded = true;
+      renderContextFiles();
+    } catch (e) {
+      showInlineError(briefErrorEl, "Could not read files: " + e.message);
+      if (!contextFiles.length) {
+        briefUploadZone.style.display = "";
+        contextFileListEl.classList.remove("visible");
+        contextFileListEl.innerHTML = "";
+      } else {
+        renderContextFiles();
+      }
+    } finally {
+      briefFileInput.value = "";
+      submitBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Analyse Assignment';
+      updateSubmitState();
+    }
+  }
+
+  async function removeContextFile(index) {
+    contextFileObjects.splice(index, 1);
+    contextFiles.splice(index, 1);
+
+    if (contextFileObjects.length === 0) {
+      contextFileText = "";
+      contextNativeCount = 0;
+      briefFileLoaded = false;
+      clearContextCache();
+      renderContextFiles();
+      updateSubmitState();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Reprocessing…';
+    try {
+      var fd = new FormData();
+      contextFileObjects.forEach(function(file) { fd.append("context_file", file); });
+      var resp = await fetch("/assignment-checker/extract-context", { method: "POST", body: fd });
+      var data = await resp.json();
+      if (!data.ok) throw new Error(data.error);
+      contextFileText = (data.context_text || "").trim();
+      contextNativeCount = data.native_doc_count || 0;
+      briefFileLoaded = true;
+      renderContextFiles();
+    } catch (e) {
+      showInlineError(briefErrorEl, "Could not reprocess files: " + e.message);
+    } finally {
+      submitBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Analyse Assignment';
+      updateSubmitState();
+    }
+  }
+
+  function renderContextFiles() {
+    contextFileListEl.innerHTML = "";
+    var hasFiles = contextFiles.length > 0;
+    briefUploadZone.style.display = hasFiles ? "none" : "";
+    briefAddBtn.classList.toggle("visible", hasFiles);
+
+    if (!hasFiles) { contextFileListEl.classList.remove("visible"); return; }
+
+    contextFiles.forEach(function(file, index) {
+      var ft = getFileTypeInfo(file.name);
+      var row = document.createElement("div");
+      row.className = "ac-file-row";
+      row.innerHTML =
+        '<i class="fa-solid ' + ft.icon + ' ac-file-row-icon" style="color:' + ft.color + ';"></i>' +
+        '<span class="ac-file-row-name" title="' + escHtml(file.name) + '">' + escHtml(file.name) + '</span>' +
+        '<span class="ac-file-row-size">' + formatBytes(file.size) + '</span>' +
+        '<i class="fa-solid fa-circle-check ac-file-row-ok"></i>' +
+        '<button class="ac-file-row-remove" type="button" title="Remove" aria-label="Remove ' + escHtml(file.name) + '">' +
+          '<i class="fa-solid fa-xmark"></i>' +
+        '</button>';
+      row.querySelector(".ac-file-row-remove").addEventListener("click", function() { removeContextFile(index); });
+      contextFileListEl.appendChild(row);
+    });
+    contextFileListEl.classList.add("visible");
+  }
+
+  async function clearContextCache() {
+    try { await fetch("/assignment-checker/clear-context", { method: "POST" }); } catch {}
+  }
+
+  // ── Submission file handling ────────────────────────────────────────────────
+  uploadZone.addEventListener("click", function() { fileInput.click(); });
+  submissionAddBtn.addEventListener("click", function() { fileInput.click(); });
+  fileInput.addEventListener("change", function() { if (fileInput.files.length) addSubmissionFiles(fileInput.files); });
+
+  // Drag-and-drop: upload zone
+  uploadZone.addEventListener("dragover", function(e) { e.preventDefault(); e.stopPropagation(); uploadZone.classList.add("dragover"); });
+  uploadZone.addEventListener("dragleave", function() { uploadZone.classList.remove("dragover"); });
+  uploadZone.addEventListener("drop", function(e) {
+    e.preventDefault(); e.stopPropagation(); uploadZone.classList.remove("dragover");
+    if (e.dataTransfer.files.length) addSubmissionFiles(e.dataTransfer.files);
+  });
+
+  // Drag-and-drop: section level
+  inputCard.addEventListener("dragover", function(e) { e.preventDefault(); inputCard.classList.add("drop-active"); });
+  inputCard.addEventListener("dragleave", function(e) { if (!inputCard.contains(e.relatedTarget)) inputCard.classList.remove("drop-active"); });
+  inputCard.addEventListener("drop", function(e) {
+    e.preventDefault(); inputCard.classList.remove("drop-active");
+    if (e.dataTransfer.files.length) addSubmissionFiles(e.dataTransfer.files);
+  });
+
+  function addSubmissionFiles(fileCollection) {
+    var existingKeys = new Set(selectedFiles.map(fileKey));
+    hideInlineError(submissionErrorEl);
+    Array.from(fileCollection).forEach(function(file) {
+      if (!validateFileSize(file, submissionErrorEl)) return;
+      var key = fileKey(file);
+      if (!existingKeys.has(key)) { selectedFiles.push(file); existingKeys.add(key); }
+    });
+    fileInput.value = "";
+    renderSubmissionFiles();
+  }
+
+  function removeSubmissionFile(index) {
+    selectedFiles.splice(index, 1);
+    renderSubmissionFiles();
+  }
+
+  function renderSubmissionFiles() {
+    fileListEl.innerHTML = "";
+    var hasFiles = selectedFiles.length > 0;
+    uploadZone.style.display = hasFiles ? "none" : "";
+    submissionAddBtn.classList.toggle("visible", hasFiles);
+
+    if (!hasFiles) { fileListEl.classList.remove("visible"); updateSubmitState(); return; }
+
+    selectedFiles.forEach(function(file, index) {
+      var ft = getFileTypeInfo(file.name);
+      var row = document.createElement("div");
+      row.className = "ac-file-row";
+      row.innerHTML =
+        '<i class="fa-solid ' + ft.icon + ' ac-file-row-icon" style="color:' + ft.color + ';"></i>' +
+        '<span class="ac-file-row-name" title="' + escHtml(file.name) + '">' + escHtml(file.name) + '</span>' +
+        '<span class="ac-file-row-size">' + formatBytes(file.size) + '</span>' +
+        '<button class="ac-file-row-remove" type="button" title="Remove" aria-label="Remove ' + escHtml(file.name) + '">' +
+          '<i class="fa-solid fa-xmark"></i>' +
+        '</button>';
+      row.querySelector(".ac-file-row-remove").addEventListener("click", function() { removeSubmissionFile(index); });
+      fileListEl.appendChild(row);
+    });
+    fileListEl.classList.add("visible");
+    updateSubmitState();
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  submitBtn.addEventListener("click", handleSubmit);
+
+  async function handleSubmit() {
+    hideAllErrors();
+    var valid = true;
+
+    if (!briefFileLoaded) {
+      showInlineError(briefErrorEl, "Upload a rubric or marking scheme to continue.");
+      valid = false;
+    }
+    if (!selectedFiles.length) {
+      showInlineError(submissionErrorEl, "Upload at least one submission file.");
+      valid = false;
+    }
+    if (!valid) {
+      var target = briefErrorEl.classList.contains("visible") ? briefCard : inputCard;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    await runFileAnalysis(
+      selectedFiles,
+      strictnessInput.value,
+      requirementsEl.value.trim(),
+      contextFileText,
+      ""
+    );
+  }
+
+  function setLoading(on) {
+    if (on) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analysing…';
+      loadingEl.classList.add("visible");
+      loadingEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      submitBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Analyse Assignment';
+      loadingEl.classList.remove("visible");
+    }
+  }
+
+  async function runFileAnalysis(files, strictness, requirements, brief, instructions) {
+    inputArea.style.display = "none";
+    setLoading(true);
+    try {
+      var fd = new FormData();
+      files.forEach(function(file) { fd.append("file", file); });
+      fd.append("strictness", strictness);
+      fd.append("requirements", requirements || "");
+      fd.append("brief_text", brief || "");
+      fd.append("instructions_text", instructions || "");
+      var resp = await fetch("/assignment-checker/upload", { method: "POST", body: fd });
+      var data = await resp.json();
+      if (!data.ok) throw new Error(data.error || "Unknown error");
+      renderResults(data.result);
+    } catch (e) {
+      inputArea.style.display = "";
+      var msg = e.message || "";
+      if (msg.toLowerCase().includes("rubric") || msg.toLowerCase().includes("brief")) {
+        briefFileLoaded = false;
+        contextFileText = "";
+        contextNativeCount = 0;
+        contextFiles = [];
+        contextFileObjects = [];
+        renderContextFiles();
+        showInlineError(briefErrorEl, "Marking criteria data expired on the server. Please re-upload your rubric files.");
+      } else {
+        showError(msg);
+      }
+    } finally {
+      setLoading(false);
+      updateSubmitState();
+    }
+  }
+
+  // ── Render results ─────────────────────────────────────────────────────────
+  function renderResults(r) {
+    inputArea.style.display = "none";
+    resultsEl.classList.add("visible");
+
+    if (r.off_topic) {
+      $("acOffTopicReason").textContent = r.off_topic_reason || "";
+      $("acOffTopicAlert").classList.add("visible");
+    }
+
+    var isRubric = r.rubric_mode === true;
+
+    $("acScoreNum").textContent   = r.overall_score != null ? r.overall_score : "—";
+    $("acScoreGrade").textContent = r.grade || "—";
+    $("acScoreSub").textContent   = "Overall Score / 100";
+    $("acScoreMarks").style.display = "none";
+
+    if (isRubric && r.total_marks_awarded != null) {
+      $("acScoreMarks").textContent = r.total_marks_awarded + " / " + r.total_marks_possible + " marks";
+      $("acScoreMarks").style.display = "";
+    }
+
+    $("acModeBadgeText").textContent = isRubric ? "Rubric Mode" : "Generic Mode";
+    $("acModeBadge").querySelector("i").className = isRubric ? "fa-solid fa-table-list" : "fa-solid fa-sliders";
+
+    // Note when rubric files were uploaded but criteria weren't detected
+    var modeNote = $("acModeNote");
+    if (!isRubric && briefFileLoaded) {
+      modeNote.textContent = "No specific marking criteria were detected in the uploaded files. Results use general assessment criteria.";
+      modeNote.style.display = "";
+    } else {
+      modeNote.style.display = "none";
+    }
+
+    // Rubric criteria cards
+    if (isRubric && (r.rubric_criteria || []).length) {
+      $("acRubricSection").style.display = "";
+      var container = $("acRubricCards");
+      container.innerHTML = "";
+      (r.rubric_criteria || []).forEach(function(c) {
+        var pct = c.max_marks ? Math.round((c.awarded_marks / c.max_marks) * 100) : 0;
+        var color = scoreColor(pct);
+        var band = (c.grade_band || "").toUpperCase();
+        var bandEmoji = ({A:'🌟', B:'✅', C:'⚡', D:'🔧', F:'🔧'})[band] || '•';
+        var feedbackHTML = parseFeedbackComment(c.comment || "");
+        container.insertAdjacentHTML("beforeend",
+          '<div class="ac-rubric-card band-' + (band || 'F') + '">' +
+            '<div class="ac-rubric-card-header">' +
+              '<div class="ac-rubric-card-title">' +
+                '<span class="ac-rubric-card-icon">' + getCriterionIcon(c.name) + '</span> ' +
+                escHtml(c.name || "") +
+              '</div>' +
+              '<div class="ac-rubric-card-score">' +
+                '<div class="ac-rubric-score-circle">' +
+                  '<svg width="48" height="48" style="transform:rotate(-90deg);">' +
+                    '<circle cx="24" cy="24" r="20" fill="none" stroke="#f3f4f6" stroke-width="3.5"></circle>' +
+                    '<circle cx="24" cy="24" r="20" fill="none" stroke="' + color + '" stroke-width="3.5"' +
+                      ' stroke-dasharray="' + (2*Math.PI*20) + '"' +
+                      ' stroke-dashoffset="' + (2*Math.PI*20*(1-pct/100)) + '"' +
+                      ' style="transition:stroke-dashoffset 1s ease;"></circle>' +
+                  '</svg>' +
+                  '<div class="ac-rubric-score-text">' +
+                    '<span class="ac-rubric-score-num">' + pct + '%</span>' +
+                    '<span class="ac-rubric-score-label">' + (c.awarded_marks != null ? c.awarded_marks : "—") + '/' + (c.max_marks != null ? c.max_marks : "—") + '</span>' +
+                  '</div>' +
+                '</div>' +
+                '<span class="ac-rubric-band-badge band-' + (band || 'F') + '">' + bandEmoji + ' ' + escHtml(c.band_label || band || "—") + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="ac-rubric-feedback">' + feedbackHTML + '</div>' +
+          '</div>');
+      });
+    } else if (!isRubric) {
+      $("acCriteriaGrid").style.display = "";
+      var criteriaNames = { content_quality:"Content & Understanding", structure:"Structure & Clarity", critical_thinking:"Analysis & Depth" };
+      var criteriaIcons = { content_quality:"fa-layer-group", structure:"fa-sitemap", critical_thinking:"fa-brain" };
+      var grid = $("acCriteriaGrid");
+      grid.innerHTML = "";
+      var scores = r.criteria_scores || {};
+      Object.entries(criteriaNames).forEach(function(entry) {
+        var key = entry[0], label = entry[1];
+        var d = scores[key] || {};
+        var score = d.score || 0;
+        var color = scoreColor(score);
+        grid.insertAdjacentHTML("beforeend",
+          '<div class="ac-criterion">' +
+            '<div class="ac-criterion-hdr">' +
+              '<span class="ac-criterion-name"><i class="fa-solid ' + criteriaIcons[key] + '" style="margin-right:.3rem;color:' + color + ';"></i>' + label + '</span>' +
+              '<span class="ac-criterion-score" style="color:' + color + ';">' + score + '</span>' +
+            '</div>' +
+            '<div class="ac-criterion-bar"><div class="ac-criterion-fill" style="width:' + score + '%;background:' + color + ';"></div></div>' +
+            '<div class="ac-criterion-comment">' + escHtml(d.comment || "") + '</div>' +
+          '</div>');
+      });
+    }
+
+    // Strengths / Weaknesses
+    var sl = $("acStrengths"); sl.innerHTML = "";
+    (r.strengths || []).slice(0, 3).forEach(function(s) { var li = document.createElement("li"); li.textContent = s; sl.appendChild(li); });
+    if (!sl.children.length) sl.innerHTML = "<li>No strengths identified.</li>";
+
+    var wl = $("acWeaknesses"); wl.innerHTML = "";
+    (r.weaknesses || []).slice(0, 3).forEach(function(w) { var li = document.createElement("li"); li.textContent = w; wl.appendChild(li); });
+    if (!wl.children.length) wl.innerHTML = "<li>No significant weaknesses identified.</li>";
+
+    // Improvements
+    var impList = $("acImprovements"); impList.innerHTML = "";
+    var improvements = r.improvements || r.specific_improvements || [];
+    improvements.forEach(function(imp) {
+      var text = typeof imp === "string" ? imp : (imp.suggestion || imp);
+      var li = document.createElement("li");
+      li.textContent = text;
+      impList.appendChild(li);
+    });
+    if (!impList.children.length) impList.innerHTML = '<li style="color:#64748b;">No specific improvements listed.</li>';
+
+    resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // ── Section toggles ───────────────────────────────────────────────────────
+  document.querySelectorAll(".ac-section-toggle").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var body = document.getElementById(btn.dataset.target);
+      if (!body) return;
+      var hidden = body.classList.toggle("hidden");
+      btn.classList.toggle("collapsed", hidden);
+    });
+  });
+
+  // ── Reset ──────────────────────────────────────────────────────────────────
+  resetBtn.addEventListener("click", function() { hideResults(true); });
+
+  function hideResults(showCheckView) {
+    resultsEl.classList.remove("visible");
+    $("acOffTopicAlert").classList.remove("visible");
+    $("acRubricSection").style.display    = "none";
+    $("acCriteriaGrid").style.display     = "none";
+    $("acScoreMarks").style.display       = "none";
+    $("acModeNote").style.display         = "none";
+    $("acHistoryResultBar").style.display = "none";
+    inputArea.style.display = "";
+    hideAllErrors();
+    if (showCheckView) switchView("check");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  $("acHistoryResultBack").addEventListener("click", function() {
+    hideResults(false);
+    switchView("history");
+  });
+
+  // ── Safe JSON helper ──────────────────────────────────────────────────────
+  async function _safeJson(resp) {
+    if (resp.status === 401) throw new Error("__session_expired__");
+    var ct = resp.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) throw new Error("Unable to load history. Please refresh the page and try again.");
+    return resp.json();
+  }
+
+  // ── History ───────────────────────────────────────────────────────────────
+  var historyLoaded = false;
+
+  async function loadHistory(force) {
+    if (historyLoaded && !force) return;
+    $("acHistoryLoading").style.display = "";
+    $("acHistoryContent").style.display = "none";
+    try {
+      var resp = await fetch("/assignment-checker/history");
+      var data = await _safeJson(resp);
+      if (!data.ok) throw new Error(data.error);
+      historyLoaded = true;
+      renderHistoryList(data.history || []);
+    } catch (e) {
+      var isExpired = e.message === "__session_expired__";
+      $("acHistoryLoading").innerHTML =
+        '<div class="ac-history-empty">' +
+          '<div class="ac-history-empty-icon" style="background:#fffbeb;">' +
+            '<i class="fa-solid fa-circle-exclamation" style="color:#d97706;"></i>' +
+          '</div>' +
+          '<h3 style="color:#92400e;">' + (isExpired ? "Session Expired" : "Something went wrong") + '</h3>' +
+          '<p>' + (isExpired ? "Your session has expired. Please log in again." : escHtml(e.message)) + '</p>' +
+          (isExpired
+            ? '<a class="ac-history-empty-btn" href="/login" style="text-decoration:none;"><i class="fa-solid fa-right-to-bracket"></i> Log In</a>'
+            : '<button class="ac-history-empty-btn" style="background:#d97706;" onclick="loadHistory(true)"><i class="fa-solid fa-rotate-right"></i> Try Again</button>') +
+        '</div>';
+    }
+  }
+
+  function renderHistoryList(items) {
+    $("acHistoryLoading").style.display = "none";
+    var cnt = $("acHistoryContent");
+    cnt.style.display = "";
+
+    var badge = $("acHistoryCount");
+    if (items.length) { badge.style.display = ""; badge.textContent = items.length; }
+    else              { badge.style.display = "none"; }
+
+    if (!items.length) {
+      cnt.innerHTML =
+        '<div class="ac-history-empty">' +
+          '<div class="ac-history-empty-icon"><i class="fa-solid fa-clipboard-list"></i></div>' +
+          '<h3>No checks yet</h3>' +
+          '<p>Your checked assignments will appear here.<br>Run your first check to get started.</p>' +
+          '<button class="ac-history-empty-btn" onclick="switchView(\'check\')">' +
+            '<i class="fa-solid fa-magnifying-glass"></i> Check an Assignment' +
+          '</button>' +
+        '</div>';
+      return;
+    }
+
+    var listHtml = items.map(function(item) {
+      var score    = item.overall_score != null ? item.overall_score : "—";
+      var grade    = item.grade || "";
+      var pct      = typeof item.overall_score === "number" ? item.overall_score : null;
+      var color    = pct !== null ? scoreColor(pct) : "#9ca3af";
+      var bgColor  = pct !== null ? scoreColor(pct) + "18" : "#f3f4f6";
+      var modeLabel = item.rubric_mode ? "Rubric" : "Generic";
+      var modeClass = item.rubric_mode ? "rubric" : "generic";
+      var marksLabel = (item.rubric_mode && item.total_marks_awarded != null)
+        ? item.total_marks_awarded + "/" + item.total_marks_possible + " marks"
+        : score + "/100";
+      return '<div class="ac-history-item" data-id="' + item.history_id + '" onclick="openHistoryEntry(' + item.history_id + ', \'' + escHtml(item.title) + '\')">' +
+          '<div class="ac-history-score" style="background:' + bgColor + ';color:' + color + ';">' +
+            '<span class="hs-num">' + (grade || score) + '</span>' +
+            '<span class="hs-pct">' + marksLabel + '</span>' +
+          '</div>' +
+          '<div class="ac-history-body">' +
+            '<div class="ac-history-title">' + escHtml(item.title || "Untitled") + '</div>' +
+            '<div class="ac-history-meta">' +
+              '<span>' + formatDate(item.created_at) + '</span>' +
+              '<span class="ac-hbadge ' + modeClass + '"><i class="fa-solid fa-' + (item.rubric_mode ? 'table-list' : 'sliders') + '"></i> ' + modeLabel + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<button class="ac-history-del" onclick="deleteHistoryEntry(event, ' + item.history_id + ')" title="Delete">' +
+            '<i class="fa-solid fa-trash-can"></i>' +
+          '</button>' +
+        '</div>';
+    }).join("");
+    cnt.innerHTML = '<div class="ac-history-list">' + listHtml + '</div>';
+  }
+
+  window.openHistoryEntry = async function(historyId, title) {
+    try {
+      var resp = await fetch("/assignment-checker/history/" + historyId);
+      var data = await _safeJson(resp);
+      if (!data.ok) throw new Error(data.error);
+
+      $("acHistoryPanel").classList.remove("visible");
+      $("acViewCheck").classList.add("active");
+      $("acViewHistory").classList.remove("active");
+      inputArea.style.display = "none";
+
+      $("acHistoryResultTitle").textContent = title;
+      $("acHistoryResultBar").style.display = "";
+      renderResults(data.entry.result || {});
+    } catch (e) {
+      alert("Could not load entry: " + e.message);
+    }
+  };
+
+  window.deleteHistoryEntry = function(evt, historyId) {
+    evt.stopPropagation();
+    var delBtn = evt.currentTarget;
+    var item   = delBtn.closest(".ac-history-item");
+    if (!item) return;
+    delBtn.style.display = "none";
+    var confirm = document.createElement("div");
+    confirm.className = "ac-history-confirm";
+    confirm.innerHTML =
+      '<span>Delete?</span>' +
+      '<button class="ac-confirm-del">Delete</button>' +
+      '<button class="ac-confirm-cancel">Cancel</button>';
+    confirm.querySelector(".ac-confirm-cancel").addEventListener("click", function(e) {
+      e.stopPropagation(); confirm.remove(); delBtn.style.display = "";
+    });
+    confirm.querySelector(".ac-confirm-del").addEventListener("click", async function(e) {
+      e.stopPropagation();
+      try {
+        await fetch("/assignment-checker/history/" + historyId, { method: "DELETE" });
+        historyLoaded = false;
+        loadHistory(true);
+      } catch { confirm.remove(); delBtn.style.display = ""; }
+    });
+    item.appendChild(confirm);
+  };
+
+  function formatDate(ts) {
+    if (!ts) return "";
+    try {
+      var d = new Date(ts.replace(" ", "T") + (ts.includes("T") ? "" : "Z"));
+      return d.toLocaleDateString(undefined, { day:"numeric", month:"short", year:"numeric" })
+           + " " + d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
+    } catch { return ts; }
+  }
+
+  // ── View switching ────────────────────────────────────────────────────────
+  window.switchView = function(view) {
+    var checkActive = view === "check";
+    $("acViewCheck").classList.toggle("active", checkActive);
+    $("acViewHistory").classList.toggle("active", !checkActive);
+    inputArea.style.display = checkActive ? "" : "none";
+    var hp = $("acHistoryPanel");
+    if (!checkActive) { hp.classList.add("visible"); loadHistory(); }
+    else              { hp.classList.remove("visible"); }
+    if (!checkActive) resultsEl.classList.remove("visible");
+  };
+
+  // Refresh history badge on load
+  (async function initHistoryBadge() {
+    try {
+      var resp = await fetch("/assignment-checker/history");
+      var data = await _safeJson(resp);
+      if (data.ok && data.history.length) {
+        var badge = $("acHistoryCount");
+        badge.style.display = "";
+        badge.textContent = data.history.length;
+      }
+    } catch {}
+  })();
+
+})();
+</script>
+{% endblock %}

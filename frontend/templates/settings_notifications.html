@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Notifications | Aegis{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --primary: #5B4FE8;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #24243B;
+  }
+
+  .settings-page {
+    font-family: 'Inter', sans-serif;
+    background: var(--gray-50);
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  .settings-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .settings-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    color: var(--gray-500);
+  }
+
+  .settings-breadcrumb a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  .settings-content {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    padding: 32px;
+  }
+
+  .section-header {
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--gray-100);
+  }
+
+  .section-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 6px;
+  }
+
+  .section-header p {
+    font-size: 0.95rem;
+    color: var(--gray-500);
+  }
+
+  .form-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 20px;
+  }
+
+  .notification-item {
+    padding: 18px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .notification-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin-top: 2px;
+  }
+
+  .notification-info {
+    flex: 1;
+  }
+
+  .notification-info strong {
+    display: block;
+    color: var(--gray-800);
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+  }
+
+  .notification-info span {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+  }
+
+  .info-card {
+    background: #dbeafe;
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    padding: 18px;
+    margin-top: 24px;
+  }
+
+  .info-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #1e40af;
+    line-height: 1.6;
+  }
+
+  .info-card strong {
+    color: #1e3a8a;
+  }
+</style>
+
+<div class="settings-page">
+  <div class="settings-wrapper">
+    <div class="settings-breadcrumb">
+      <a href="{{ url_for('settings') }}"><i class="fa-solid fa-arrow-left"></i> Back to Settings</a>
+    </div>
+
+    <div class="settings-content">
+      <div class="section-header">
+        <h1>Notification Settings</h1>
+        <p>Manage how you receive notifications</p>
+      </div>
+
+      <h3 class="form-section-title">Email Notifications</h3>
+
+      <div class="notification-item">
+        <input type="checkbox" checked>
+        <div class="notification-info">
+          <strong>Study Plan Updates</strong>
+          <span>Get notified when new study plans are generated</span>
+        </div>
+      </div>
+
+      <div class="notification-item">
+        <input type="checkbox" checked>
+        <div class="notification-info">
+          <strong>Daily Summary</strong>
+          <span>Receive your daily study summary</span>
+        </div>
+      </div>
+
+      <div class="notification-item">
+        <input type="checkbox">
+        <div class="notification-info">
+          <strong>Assignment Reminders</strong>
+          <span>Get reminded about upcoming assignments</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <p><strong>Coming Soon:</strong> These notification settings are currently in development and will be available in a future update.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

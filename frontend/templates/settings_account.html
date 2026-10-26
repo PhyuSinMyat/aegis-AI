@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% block title %}Account Settings | Aegis{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  /* Reuse same styles from settings_profile */
+  :root {
+    --primary: #5B4FE8;
+    --primary-dark: #3C34B0;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-500: #64748b;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #24243B;
+    --red-500: #ef4444;
+    --red-600: #dc2626;
+  }
+
+  .settings-page {
+    font-family: 'Inter', sans-serif;
+    background: var(--gray-50);
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  .settings-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .settings-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    color: var(--gray-500);
+  }
+
+  .settings-breadcrumb a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  .settings-breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .settings-content {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    padding: 32px;
+  }
+
+  .section-header {
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .section-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 6px;
+  }
+
+  .section-header p {
+    font-size: 0.95rem;
+    color: var(--gray-500);
+  }
+
+  .form-section {
+    margin-bottom: 40px;
+  }
+
+  .form-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 18px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    color: var(--gray-800);
+  }
+
+  .form-group input:disabled {
+    background: var(--gray-50);
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .form-hint {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    margin-top: 6px;
+  }
+
+  .info-card {
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+
+  .info-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #92400e;
+    line-height: 1.6;
+  }
+
+  .info-card strong {
+    color: #78350f;
+  }
+
+  .btn {
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+  }
+
+  .btn-danger {
+    background: var(--red-500);
+    color: #fff;
+  }
+
+  .btn-danger:hover {
+    background: var(--red-600);
+  }
+
+  .danger-zone {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .danger-zone-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--red-600);
+    margin-bottom: 12px;
+  }
+
+  .danger-zone-description {
+    font-size: 0.9rem;
+    color: var(--gray-500);
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 640px) {
+    .settings-page {
+      padding: 20px 16px;
+    }
+
+    .settings-content {
+      padding: 24px 20px;
+    }
+  }
+</style>
+
+<div class="settings-page">
+  <div class="settings-wrapper">
+    <div class="settings-breadcrumb">
+      <a href="{{ url_for('settings') }}"><i class="fa-solid fa-arrow-left"></i> Back to Settings</a>
+    </div>
+
+    <div class="settings-content">
+      <div class="section-header">
+        <h1>Account Settings</h1>
+        <p>Manage your email and password</p>
+      </div>
+
+      <!-- Email Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">Email Address</h3>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" value="{{ current_user.email if current_user else '' }}" disabled>
+          <p class="form-hint">Email cannot be changed at this time. Contact support if you need to update it.</p>
+        </div>
+      </div>
+
+      <!-- Password Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">Password</h3>
+        <div class="info-card">
+          <p><strong>Password Security:</strong> Your password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.</p>
+        </div>
+        <a href="{{ url_for('forgot_password') }}" class="btn btn-primary">Change Password</a>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="danger-zone">
+        <h3 class="danger-zone-title">Danger Zone</h3>
+        <p class="danger-zone-description">Once you delete your account, there is no going back. Please be certain.</p>
+        <button type="button" class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: #fff; border-radius: 16px; padding: 32px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+      <div style="width: 48px; height: 48px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">⚠️</div>
+      <h3 style="font-size: 1.5rem; font-weight: 700; color: #dc2626; margin: 0;">Delete Account</h3>
+    </div>
+
+    <div style="margin: 20px 0;">
+      <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+        <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.5;"><strong style="color: #78350f;">Warning:</strong> This action is permanent and cannot be undone!</p>
+      </div>
+
+      <form method="POST" action="{{ url_for('delete_account') }}" id="deleteAccountForm" style="display: flex; flex-direction: column; gap: 16px;" autocomplete="off">
+        <div>
+          <label style="font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; display: block;">Enter your password to confirm</label>
+          <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif;">
+        </div>
+
+        <div>
+          <label style="font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; display: block;">Type "DELETE MY ACCOUNT" to confirm</label>
+          <input type="text" id="confirmation_text" name="confirmation_text" required autocomplete="off" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif;">
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button type="button" id="cancelDelete" style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #f3f4f6; color: #6b7280; font-family: 'Inter', sans-serif;">Cancel</button>
+          <button type="submit" id="confirmDelete" disabled style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #dc2626; color: #fff; font-family: 'Inter', sans-serif;">Delete My Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+  const deleteModal = document.getElementById('deleteModal');
+  const deleteForm = document.getElementById('deleteAccountForm');
+  const passwordInput = document.getElementById('confirm_password');
+  const confirmationInput = document.getElementById('confirmation_text');
+  const confirmBtn = document.getElementById('confirmDelete');
+  const cancelBtn = document.getElementById('cancelDelete');
+
+  if (deleteAccountBtn && deleteModal) {
+    deleteAccountBtn.addEventListener('click', async function() {
+      const confirmed = await customConfirm(
+        'Are you sure you want to delete your account? This action is permanent and cannot be undone. All your data will be lost.',
+        'Delete Account',
+        'error'
+      );
+
+      if (confirmed) {
+        deleteModal.style.display = 'flex';
+        passwordInput.focus();
+      }
+    });
+
+    cancelBtn.addEventListener('click', function() {
+      deleteModal.style.display = 'none';
+      deleteForm.reset();
+      confirmBtn.disabled = true;
+    });
+
+    deleteModal.addEventListener('click', function(e) {
+      if (e.target === deleteModal) {
+        deleteModal.style.display = 'none';
+        deleteForm.reset();
+        confirmBtn.disabled = true;
+      }
+    });
+
+    function validateInputs() {
+      const passwordFilled = passwordInput.value.trim().length > 0;
+      const confirmationMatch = confirmationInput.value.trim().toLowerCase() === 'delete my account';
+      confirmBtn.disabled = !(passwordFilled && confirmationMatch);
+    }
+
+    passwordInput.addEventListener('input', validateInputs);
+    confirmationInput.addEventListener('input', validateInputs);
+
+    deleteForm.addEventListener('submit', function(e) {
+      if (confirmBtn.disabled) {
+        e.preventDefault();
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

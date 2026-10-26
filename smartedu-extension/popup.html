@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 280px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f9fafb;
+    color: #111827;
+  }
+  .header {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    padding: 16px 18px 14px;
+  }
+  .header-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .header-sub {
+    font-size: 0.75rem;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+  .body { padding: 14px 16px; }
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot.tracking  { background: #16a34a; }
+  .dot.allowed   { background: #16a34a; }
+  .dot.distract  { background: #dc2626; }
+  .dot.idle      { background: #9ca3af; }
+  .dot.offline   { background: #f59e0b; }
+  .status-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #374151;
+  }
+  .status-sub {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 1px;
+  }
+  .tab-row {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .tab-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .tab-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chip {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .chip.allowed   { background: #dcfce7; color: #166534; }
+  .chip.distract  { background: #fee2e2; color: #991b1b; }
+  .footer {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    text-align: center;
+    padding: 0 0 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">Aegis Tracker</div>
+  <div class="header-sub">Browser Activity Monitor</div>
+</div>
+
+<div class="body">
+
+  <div class="status-row">
+    <span class="dot" id="statusDot"></span>
+    <div>
+      <div class="status-label" id="statusLabel">Checking…</div>
+      <div class="status-sub" id="statusSub"></div>
+    </div>
+  </div>
+
+  <div class="tab-row" id="tabRow" style="display:none;">
+    <div class="tab-label">Active Tab</div>
+    <div class="tab-name" id="tabName"></div>
+    <span class="chip" id="tabChip"></span>
+  </div>
+
+</div>
+
+<div class="footer" id="lastSent"></div>
+
+<script src="popup.js"></script>
+</body>
+</html>

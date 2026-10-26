@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Aegis Study Tracker",
+  "version": "1.1",
+  "description": "Tracks your active browser tab during study sessions and reports to Aegis.",
+
+  "permissions": ["tabs", "storage", "alarms", "notifications", "idle", "scripting"],
+  "host_permissions": ["http://localhost:5000/*", "https://*/*"],
+
+  "icons": {
+    "16": "icon.png",
+    "32": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Aegis Tracker",
+    "default_icon": {
+      "16": "icon.png",
+      "32": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

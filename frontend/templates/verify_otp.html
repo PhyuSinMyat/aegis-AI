@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Code - Aegis{% endblock %}
+
+{% block content %}
+<style>
+  .auth-container {
+    min-height: 100vh;
+    background: #E4E2F5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .auth-card {
+    background: #F5F4FF;
+    border: 0.5px solid #D8D5F0;
+    border-radius: 12px;
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .auth-card h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1E1B4B;
+    margin: 0 0 8px 0;
+  }
+
+  .auth-card .subtitle {
+    font-size: 13px;
+    font-weight: 400;
+    color: #6B6B8A;
+    margin: 0 0 32px 0;
+  }
+
+  .form-group {
+    margin-bottom: 24px;
+  }
+
+  .otp-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1E1B4B;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .otp-input-container {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .otp-input {
+    width: 56px;
+    height: 64px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1E1B4B;
+    border: 2px solid #D8D5F0;
+    border-radius: 12px;
+    background: #FFFFFF;
+    transition: all 0.2s;
+    outline: none;
+  }
+
+  .otp-input:focus {
+    border-color: #5B4FE8;
+    background: #EEEDFE;
+    box-shadow: 0 0 0 4px rgba(91, 79, 232, 0.1);
+  }
+
+  .otp-input:not(:placeholder-shown) {
+    border-color: #5B4FE8;
+    background: #EEEDFE;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.05s;
+    font-family: inherit;
+  }
+
+  .btn-primary {
+    background: #5B4FE8;
+    color: #FFFFFF;
+  }
+
+  .btn-primary:hover {
+    background: #3C34B0;
+  }
+
+  .btn-primary:active {
+    transform: scale(0.97);
+  }
+
+  .switch-link {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 400;
+    color: #6B6B8A;
+    margin-top: 20px;
+  }
+
+  .switch-link a {
+    color: #5B4FE8;
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .switch-link a:hover {
+    text-decoration: underline;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #5B4FE8;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    transition: all 0.2s;
+  }
+
+  .back-link:hover {
+    color: #3C34B0;
+    gap: 10px;
+  }
+
+  @media (max-width: 640px) {
+    .otp-input-container {
+      gap: 8px;
+    }
+
+    .otp-input {
+      width: 48px;
+      height: 56px;
+      font-size: 20px;
+    }
+  }
+</style>
+<div class="auth-container">
+    <div class="auth-card">
+        <a href="{{ url_for('forgot_password') }}" class="back-link">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back</span>
+        </a>
+
+        <h1>Verify Your Identity</h1>
+        <p class="subtitle">Enter the 6-digit code sent to {{ email }}</p>
+
+        <form method="POST" class="auth-form" id="otp-form">
+            <div class="form-group">
+                <label for="otp-input-1" class="otp-label">Enter 6-digit authentication code</label>
+                <div class="otp-input-container">
+                    <input type="text" class="otp-input" id="otp-input-1" maxlength="1" pattern="[0-9]" inputmode="numeric" required autocomplete="off">
+                    <input type="text" class="otp-input" id="otp-input-2" maxlength="1" pattern="[0-9]" inputmode="numeric" required autocomplete="off">
+                    <input type="text" class="otp-input" id="otp-input-3" maxlength="1" pattern="[0-9]" inputmode="numeric" required autocomplete="off">
+                    <input type="text" class="otp-input" id="otp-input-4" maxlength="1" pattern="[0-9]" inputmode="numeric" required autocomplete="off">
+                    <input type="text" class="otp-input" id="otp-input-5" maxlength="1" pattern="[0-9]" inputmode="numeric" required autocomplete="off">
+                    <input type="text" class="otp-input" id="otp-input-6" maxlength="1" pattern="[0-9]" inputmode="numeric" required autocomplete="off">
+                </div>
+                <!-- Hidden input to store the complete OTP for form submission -->
+                <input type="hidden" id="otp_code" name="otp_code">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Verify Now</button>
+        </form>
+
+        <p class="switch-link">
+            Didn't receive the code?
+            <a href="{{ url_for('forgot_password') }}">Request a new one</a>
+        </p>
+
+        <p class="switch-link">
+            <a href="{{ url_for('login') }}">Back to Login</a>
+        </p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.otp-input');
+    const hiddenInput = document.getElementById('otp_code');
+    const form = document.getElementById('otp-form');
+    let hasSubmitted = false;
+
+    // Focus first input on load
+    inputs[0].focus();
+
+    inputs.forEach((input, index) => {
+        // Handle input
+        input.addEventListener('input', function(e) {
+            // Only allow numbers
+            this.value = this.value.replace(/[^0-9]/g, '');
+
+            // Move to next input if digit entered
+            if (this.value.length === 1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+
+            // Update hidden input with complete OTP
+            updateHiddenInput();
+            submitIfComplete();
+
+        });
+
+        // Handle backspace
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                inputs[index - 1].focus();
+            }
+        });
+
+        // Handle paste
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+
+            if (pastedData.length === 6) {
+                pastedData.split('').forEach((char, i) => {
+                    if (inputs[i]) {
+                        inputs[i].value = char;
+                    }
+                });
+                inputs[5].focus();
+                updateHiddenInput();
+                submitIfComplete();
+
+            }
+        });
+
+        // Select content on focus
+        input.addEventListener('focus', function() {
+            this.select();
+        });
+
+        // Only allow numbers on keypress
+        input.addEventListener('keypress', function(e) {
+            if (e.key < '0' || e.key > '9') {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Update hidden input with complete OTP
+    function updateHiddenInput() {
+        const otp = Array.from(inputs).map(input => input.value).join('');
+        hiddenInput.value = otp;
+    }
+
+    function submitIfComplete() {
+        const otp = hiddenInput.value;
+        if (!hasSubmitted && otp.length === 6) {
+            hasSubmitted = true;
+            form.requestSubmit();
+        }
+    }
+
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        const otp = Array.from(inputs).map(input => input.value).join('');
+        hiddenInput.value = otp;
+
+        if (otp.length !== 6) {
+            e.preventDefault();
+            hasSubmitted = false;
+            alert('Please enter all 6 digits');
+            inputs[0].focus();
+        }
+    });
+});
+</script>
+{% endblock %}

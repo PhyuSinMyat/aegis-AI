@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Your Profile - Aegis{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Complete Your Profile</h1>
+        <p class="subtitle">Tell us a bit about yourself (all fields optional)</p>
+
+        <!-- Progress Indicator -->
+        <div class="registration-progress">
+            <div class="progress-step completed">
+                <div class="progress-circle">✓</div>
+                <span>Account</span>
+            </div>
+            <div class="progress-line completed"></div>
+            <div class="progress-step active">
+                <div class="progress-circle">2</div>
+                <span>Profile</span>
+            </div>
+        </div>
+
+        <form method="POST" class="auth-form" enctype="multipart/form-data">
+            <div class="two-col">
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    {{ form.first_name(class="form-input", placeholder="John", id="first_name") }}
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    {{ form.last_name(class="form-input", placeholder="Doe", id="last_name") }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="profile_pic">Profile Picture</label>
+                <div class="file-upload-area" id="fileUploadArea">
+                    <input
+                        id="profile_pic"
+                        name="profile_pic"
+                        type="file"
+                        class="file-input-hidden"
+                        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                    >
+                    <div class="upload-prompt" id="uploadPrompt">
+                        <div class="upload-icon">📸</div>
+                        <p class="upload-text">Click to upload or drag and drop</p>
+                        <p class="upload-hint">PNG, JPG, GIF, WEBP (Max 5MB)</p>
+                    </div>
+                    <div class="upload-preview" id="uploadPreview" hidden>
+                        <img id="previewImage" src="" alt="Preview">
+                        <button type="button" class="remove-image" id="removeImage">✕</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="form-group">
+                    <label for="date_of_birth">Date of Birth</label>
+                    {{ form.date_of_birth(class="form-input", type="date", id="date_of_birth") }}
+                    <p class="helper-text">Optional</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone_number">Phone Number</label>
+                    {{ form.phone_number(class="form-input", placeholder="+1 (555) 123-4567", id="phone_number") }}
+                    <p class="helper-text">Optional</p>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                {{ form.submit(class="btn btn-primary btn-large") }}
+                <a href="{{ url_for('upload.upload') }}" class="btn-skip">Skip for now →</a>
+            </div>
+        </form>
+
+        <p class="switch-link">
+            <a href="{{ url_for('register') }}">← Back to account details</a>
+        </p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('profile_pic');
+    const uploadArea = document.getElementById('fileUploadArea');
+    const uploadPrompt = document.getElementById('uploadPrompt');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const previewImage = document.getElementById('previewImage');
+    const removeButton = document.getElementById('removeImage');
+
+    // Click to upload
+    uploadArea.addEventListener('click', function(e) {
+        if (!uploadPreview.hidden && e.target !== removeButton) return;
+        fileInput.click();
+    });
+
+    // File selected
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            displayPreview(file);
+        }
+    });
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#5B4FE8';
+        uploadArea.style.background = '#f0f0ff';
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.style.borderColor = '';
+        uploadArea.style.background = '';
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.style.borderColor = '';
+        uploadArea.style.background = '';
+
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            fileInput.files = e.dataTransfer.files;
+            displayPreview(file);
+        }
+    });
+
+    // Display preview
+    function displayPreview(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            uploadPrompt.hidden = true;
+            uploadPreview.hidden = false;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Remove image
+    removeButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fileInput.value = '';
+        uploadPrompt.hidden = false;
+        uploadPreview.hidden = true;
+        previewImage.src = '';
+    });
+});
+</script>
+
+<style>
+.registration-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 24px 0 32px 0;
+    gap: 8px;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.progress-step.completed .progress-circle {
+    background: #10b981;
+    color: #fff;
+}
+
+.progress-step.active .progress-circle {
+    background: #5B4FE8;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.progress-step span {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.progress-step.completed span,
+.progress-step.active span {
+    color: #5B4FE8;
+    font-weight: 600;
+}
+
+.progress-line {
+    width: 60px;
+    height: 2px;
+    background: #e5e7eb;
+    margin: 0 4px;
+    margin-bottom: 28px;
+    transition: all 0.3s ease;
+}
+
+.progress-line.completed {
+    background: #10b981;
+}
+
+.file-upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-upload-area:hover {
+    border-color: #4f46e5;
+    background: #f9fafb;
+}
+
+.file-input-hidden {
+    display: none;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+}
+
+.upload-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 8px 0;
+}
+
+.upload-hint {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+.upload-preview {
+    position: relative;
+    width: 100%;
+    max-width: 200px;
+}
+
+.upload-preview img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.remove-image {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.95);
+    color: #fff;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.remove-image:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+.form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.btn-skip {
+    text-align: center;
+    padding: 12px 24px;
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.btn-skip:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-large {
+    padding: 14px 24px;
+    font-size: 1rem;
+}
+
+@media (max-width: 600px) {
+    .two-col {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

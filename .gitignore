@@ -1,0 +1,69 @@
+# Environment variables (NEVER commit this - contains passwords!)
+.env
+.env.local
+.env.*.local
+.env1
+.env.example
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Database (don't commit local database to GitHub)
+*.db
+*.sqlite
+*.sqlite3
+users.db
+
+# Uploaded files (don't commit user uploads)
+uploads/
+frontend/static/profile_pics/*
+!frontend/static/profile_pics/.gitkeep
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Windows files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Don't commit AWS keys!
+*.pem
+*.ppk
+credentials
+credentials.json
